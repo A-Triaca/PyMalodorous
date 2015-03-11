@@ -32,19 +32,19 @@ def ReplaceSingleQuote(password):
     return tempPassword
 
 def DropDatabase(connection, cursor):
-    file = open("Drop Tables.sql", 'r')
+    file = open("Database/Drop Tables.sql", 'r')
     sql = " ".join(file.readlines())
     cursor.execute(sql)
     connection.commit()
 
 def CreateDatabase(connection, cursor):
-    file = open("Create Tables.sql", 'r')
+    file = open("Database/Create Tables.sql", 'r')
     sql = " ".join(file.readlines())
     cursor.execute(sql)
     connection.commit()
 
 def SetUpCharacterSet(connection, cursor):
-    file = open("Insert Into CharacterSet.sql", 'r')
+    file = open("Database/Insert Into CharacterSet.sql", 'r')
     sql = " ".join(file.readlines())
     cursor.execute(sql)
     connection.commit()
@@ -83,7 +83,7 @@ def main():
     SetUpCharacterSet(cnxn, cursor)
 
     ##Open training password file
-    passwordFile = open('10kMostCommon.txt', 'r')
+    passwordFile = open('Passwords/10kMostCommon.txt', 'r')
 
     ##Loop through passwords in file and break them down and add to DB
     for password in passwordFile:
