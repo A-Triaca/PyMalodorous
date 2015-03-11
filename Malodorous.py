@@ -28,11 +28,33 @@ def replaceSingleQuote(password):
             tempPassword += password[i]
     return tempPassword
 
+def dropDatabase(connection, cursor):
+    file = open("Drop Tables.sql", 'r')
+    sql = " ".join(file.readlines())
+    cursor.execute(sql)
+    connection.commit()
+
+def createDatabase(connection, cursor):
+    file = open("Create Tables.sql", 'r')
+    sql = " ".join(file.readlines())
+    cursor.execute(sql)
+    connection.commit()
+
+def setUpCharacterSet(connection, cursor):
+    file = open("Insert Into CharacterSet.sql", 'r')
+    sql = " ".join(file.readlines())
+    cursor.execute(sql)
+    connection.commit()
+
 def main():
     ##Setup connection to SQL Server
     cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=localhost;'
                           'DATABASE=Malodorous;UID=sa;PWD=password')
     cursor = cnxn.cursor()
+    ##Drop and recreate the database
+    dropDatabase(cnxn, cursor)
+    createDatabase(cnxn, cursor)
+    setUpCharacterSet(cnxn, cursor)
     ##Open training password file
     passwordFile = open('10kMostCommon.txt', 'r')
     ##Loop through passwords in file and break them down and add to DB
