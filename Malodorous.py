@@ -18,7 +18,7 @@ def main():
         cursor.execute("INSERT INTO dbo.Password (Password, Length, DateAdded, Deleetified) VALUES ('" + password + "', " + str(password.__len__()) + ", '" + str(datetime.datetime.now()) + "', '" + str(False) + "');")
         cnxn.commit()
         ##Get the inserted password ID
-        #passordId = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
+        passordId = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
 
 
 if __name__ == "__main__":
