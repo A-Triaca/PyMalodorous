@@ -3,7 +3,7 @@ __author__ = 'Alex'
 import pyodbc
 import datetime
 
-def passwordAdvancedMask(password):
+def InsertPasswordAdvancedMask(password, passwordId, connection, cursor):
 
     advancedMask = ""
 
@@ -17,9 +17,12 @@ def passwordAdvancedMask(password):
         else:
             advancedMask += "$s"
 
-    return advancedMask
+    cursor.execute("INSERT INTO dbo.AdvancedMask "
+                       "(Mask, OriginalPassword) "
+                       "VALUES ('" + advancedMask + "', " + str(passwordId) + ");")
+    connection.commit()
 
-def replaceSingleQuote(password):
+def ReplaceSingleQuote(password):
     tempPassword = ""
     for i in range(password.__len__()):
         if(password[i] == "'"):
@@ -28,23 +31,46 @@ def replaceSingleQuote(password):
             tempPassword += password[i]
     return tempPassword
 
-def dropDatabase(connection, cursor):
+def DropDatabase(connection, cursor):
     file = open("Drop Tables.sql", 'r')
     sql = " ".join(file.readlines())
     cursor.execute(sql)
     connection.commit()
 
-def createDatabase(connection, cursor):
+def CreateDatabase(connection, cursor):
     file = open("Create Tables.sql", 'r')
     sql = " ".join(file.readlines())
     cursor.execute(sql)
     connection.commit()
 
-def setUpCharacterSet(connection, cursor):
+def SetUpCharacterSet(connection, cursor):
     file = open("Insert Into CharacterSet.sql", 'r')
     sql = " ".join(file.readlines())
     cursor.execute(sql)
     connection.commit()
+
+def InsertPassword(password, connection, cursor):
+    cursor.execute("INSERT INTO dbo.Password (Password, Length, DateAdded, Deleetified) " \
+           "VALUES ('" + password + "', " + str(password.__len__()) + ", '" +
+                   str(datetime.datetime.now()) + "', '" + str(False) + "');")
+    connection.commit()
+
+def InsertPasswordCharacterPlacement(password, passwordId, connection, cursor):
+    InsertStatement = "INSERT INTO dbo.CharacterPlacement " \
+                      "(Character, Placement, OriginalPassword) VALUES "
+    if(not password.__contains__("'")):
+        for i in range(password.__len__()):
+            InsertStatement += "('" + password[i] + "', " + str(i) + ", " + str(passwordId) + "),"
+    else:
+        for i in range(password.__len__()):
+            if(password[i] == "'"):
+                InsertStatement += "('''', " + str(i) + ", " + str(passwordId) + "),"
+            else:
+                InsertStatement += "('" + password[i] + "', " + str(i) + ", " + str(passwordId) + "),"
+    InsertStatement = InsertStatement[:-1]
+    cursor.execute(InsertStatement)
+    connection.commit()
+
 
 def main():
     ##Setup connection to SQL Server
@@ -52,33 +78,35 @@ def main():
                           'DATABASE=Malodorous;UID=sa;PWD=password')
     cursor = cnxn.cursor()
     ##Drop and recreate the database
-    dropDatabase(cnxn, cursor)
-    createDatabase(cnxn, cursor)
-    setUpCharacterSet(cnxn, cursor)
+    DropDatabase(cnxn, cursor)
+    CreateDatabase(cnxn, cursor)
+    SetUpCharacterSet(cnxn, cursor)
+
     ##Open training password file
     passwordFile = open('10kMostCommon.txt', 'r')
+
     ##Loop through passwords in file and break them down and add to DB
     for password in passwordFile:
+
         ##Trim password
         password = password.rstrip("\n")
-        ##Escape single quotes
-        if(password.__contains__("'")):
-            password = replaceSingleQuote(password)
-        ##Insert password into DB and commit
-        cursor.execute("INSERT INTO dbo.Password "
-                       "(Password, Length, DateAdded, Deleetified) "
-                       "VALUES ('" + password + "', " + str(password.__len__()) +
-                       ", '" + str(datetime.datetime.now()) + "', '" + str(False) + "');")
-        cnxn.commit()
-        ##Get the inserted password ID
-        passordId = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
-        ##Get password Advanced Mask
-        advancedMask = passwordAdvancedMask(password)
-        cursor.execute("INSERT INTO dbo.AdvancedMask "
-                       "(Mask, OriginalPassword) "
-                       "VALUES ('" + advancedMask + "', " + str(passordId) + ");")
-        cnxn.commit()
 
+        ##Escape single quotes
+        escapedPassword = ""
+        if(password.__contains__("'")):
+            escapedPassword = ReplaceSingleQuote(password)
+
+        ##Insert password into DB and commit
+        InsertPassword(escapedPassword, cnxn, cursor)
+
+        ##Get the inserted password ID
+        passwordId = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
+
+        ##Add password Advanced Masks
+        InsertPasswordAdvancedMask(password, passwordId, cnxn, cursor)
+
+        ##Get password Character Placement
+        InsertPasswordCharacterPlacement(password, passwordId, cnxn, cursor)
 
 if __name__ == "__main__":
     main()
