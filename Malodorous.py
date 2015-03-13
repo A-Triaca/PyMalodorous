@@ -70,17 +70,50 @@ def GetPasswordCharacterPlacement(password):
 def GetPasswordAdvancedMask(password):
     advancedMask = ""
 
-    for i in range(password.__len__()):
-        if(password[i].islower()):
+    for character in password:
+        if(character.islower()):
             advancedMask += "$l"
-        elif((password[i]).isupper()):
+        elif(character.isupper()):
             advancedMask += "$u"
-        elif((password[i]).isdigit()):
+        elif(character.isdigit()):
             advancedMask += "$d"
         else:
             advancedMask += "$s"
 
     return advancedMask
+
+def GetCharacterSet(password):
+    characterSet = ""
+    lower = upper = digit = special = False
+
+    for character in password:
+        if (character.islower()):
+            lower = True
+        elif (character.isupper()):
+            upper = True
+        elif (character.isdigit()):
+            digit = True
+        else:
+            special = True
+
+    if (lower and upper):
+        characterSet += "Alpha"
+    elif(lower):
+        characterSet += "Loweralpha"
+    elif(upper):
+        characterSet += "Upperalpha"
+
+    if (digit):
+        characterSet += "Numeric"
+    if (special):
+        characterSet += "Special"
+
+    return characterSet
+
+def InsertCharacterSet(password, passwordId, connection, cursor):
+    cursor.execute("INSERT INTO dbo.Complexity (CharacterSet, OriginalPassword) VALUES ('" + GetCharacterSet(password) + "', " + str(passwordId) + ")")
+    connection.commit
+
 
 def main():
     ##Setup connection to SQL Server
@@ -90,7 +123,7 @@ def main():
     ##Drop and recreate the database
     DropDatabase(cnxn, cursor)
     CreateDatabase(cnxn, cursor)
-    SetUpCharacterSet(cnxn, cursor)
+    #SetUpCharacterSet(cnxn, cursor)
 
     ##Open training password folder
     trainingSetFolder = "Passwords"
@@ -128,6 +161,9 @@ def main():
 
             ##Get password Character Placement
             InsertPasswordCharacterPlacement(password, passwordId, cnxn, cursor)
+
+            ##Get password Complexity
+            InsertCharacterSet(password, passwordId, cnxn, cursor)
 
 if __name__ == "__main__":
     main()

@@ -4,7 +4,7 @@ Complexity,
 AdvancedMask,
 BaseWord,
 CharacterPlacement,
-CharacterSet,
+--CharacterSet,
 NGrams,
 MarkovChain,
 Password;

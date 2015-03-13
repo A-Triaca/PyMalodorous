@@ -46,13 +46,13 @@ CREATE TABLE dbo.BaseWord (
 	PRIMARY KEY (WordId)
 );
 
-
+/*
 CREATE TABLE dbo.CharacterSet (
 	CharacterSetId INT NOT NULL IDENTITY (1, 1),
 	CharacterSet NVARCHAR(50) NOT NULL,
 	PRIMARY KEY (CharacterSetId)
 );
-
+*/
 
 CREATE TABLE dbo.SimpleMask (
 	MaskId INT NOT NULL IDENTITY (1, 1),
@@ -70,10 +70,9 @@ CREATE TABLE dbo.MarkovChain (
 	PRIMARY KEY (ChainId)
 );
 
---Joining table between Password and CharacterSet
 CREATE TABLE dbo.Complexity (
 	ComplexityId INT NOT NULL IDENTITY (1, 1),
-	CharacterSet INT NOT NULL,
+	CharacterSet NVARCHAR(50) NOT NULL,
 	OriginalPassword INT NOT NULL,
 	PRIMARY KEY (ComplexityId)
 );
@@ -117,6 +116,4 @@ REFERENCES Password (PasswordId);
 
 ALTER TABLE Complexity
 ADD FOREIGN KEY (OriginalPassword)
-REFERENCES Password (PasswordId),
-FOREIGN KEY (CharacterSet)
-REFERENCES CharacterSet (CharacterSetId);
+REFERENCES Password (PasswordId)
