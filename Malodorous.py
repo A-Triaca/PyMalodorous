@@ -46,9 +46,9 @@ def setUpAvailability(connection, cursor):
     connection.commit()
 
 def InsertPassword(password, passwordOrigin, connection, cursor):
-    cursor.execute("INSERT INTO dbo.Password (Password, PasswordOrigin, Length, DateAdded, Deleetified) " \
-           "VALUES ('" + password + "', '" + str(passwordOrigin) + "', " + str(password.__len__()) + ", '" +
-                   str(datetime.datetime.now()) + "', '" + str(False) + "');")
+    cursor.execute("INSERT INTO dbo.Password (Password, PasswordOrigin, Length, Deleetified) " \
+           "VALUES ('" + password + "', '" + str(passwordOrigin) + "', " +
+                   str(password.__len__()) + ", '" + str(False) + "');")
     connection.commit()
 
 def InsertCharacterPlacement(password, passwordId, connection, cursor):
@@ -173,20 +173,22 @@ def GetNGramsUnsigned(password):
 
 def InsertNGrams(password, passwordId, connection, cursor):
     InsertStatement = "INSERT INTO dbo.NGrams " \
-                      "(Lenth ,NGram ,Placement, Unsigned, OriginalPassword) VALUES "
+                      "(Lenth ,NGram ,Placement, Unsigned, IsWord, OriginalPassword) VALUES "
     for nGram in GetNGrams(password):
+        base = cursor.execute("SELECT COUNT(*) FROM dbo.BaseWord WHERE Word = '" + nGram[1] + "'").fetchone()[0]
         InsertStatement += "(" + str(nGram[0]) + ", '" + nGram[1] + "', " + \
-                           str(nGram[2]) + ", " + str(nGram[3]) + ", " + \
+                           str(nGram[2]) + ", " + str(nGram[3]) + ", " + str(base) + ", " + \
                            str(passwordId) + "),"
     cursor.execute(InsertStatement[:-1])
     connection.commit()
 
 def InsertNGramUnsigned(password, passwordId, connection, cursor):
     InsertStatement = "INSERT INTO dbo.NGrams " \
-                      "(Lenth ,NGram ,Placement, Unsigned, OriginalPassword) VALUES "
+                      "(Lenth ,NGram ,Placement, Unsigned, IsWord, OriginalPassword) VALUES "
     for nGram in GetNGramsUnsigned(password):
+        base = cursor.execute("SELECT COUNT(*) FROM dbo.BaseWord WHERE Word = '" + nGram[1] + "'").fetchone()[0]
         InsertStatement += "(" + str(nGram[0]) + ", '" + nGram[1] + "', " + \
-                           str(nGram[2]) + ", " + str(nGram[3]) + ", " + \
+                           str(nGram[2]) + ", " + str(nGram[3]) + ", " + str(base) + ", " + \
                            str(passwordId) + "),"
     cursor.execute(InsertStatement[:-1])
     connection.commit()
@@ -217,7 +219,7 @@ def InsertSimpleMask(password, passwordId, connection, cursor):
     cursor.execute(InsertStatement)
     connection.commit()
 
-def GetAvailability(connection, cursor):
+def GetAvailability( cursor):
     message = "What is the difficulty of obtaining the database?\n"
     catagories = cursor.execute("SELECT * FROM dbo.Availability")
     for option in catagories:
@@ -228,17 +230,24 @@ def GetAvailability(connection, cursor):
     return availability
 
 def AddPasswordOriginToDatabase(file, connection, cursor):
-    availability = GetAvailability(connection, cursor)
-    cursor.execute("INSERT INTO PasswordOrigin (Origin, Availability, DateAdded) VALUES ('" + file + "', '" + availability + "', '" + str(datetime.datetime.now()) + "')")
+    availability = GetAvailability(cursor)
+    cursor.execute("INSERT INTO PasswordOrigin (Origin, Availability) "
+                   "VALUES ('" + file + "', " + str(availability) + ")")
+    connection.commit()
+
+def ResetDictionaries(connection, cursor):
+    cursor.execute("DROP TABLE dbo.BaseWord")
+    connection.commit()
+    cursor.execute("CREATE TABLE dbo.BaseWord "
+                   "(Word NVARCHAR(50) NOT NULL, Length INT NOT NULL, PRIMARY KEY (Word));")
     connection.commit()
 
 def LoadDictionaries(connection, cursor):
-    cursor.execute("DROP TABLE dbo.BaseWord")
-    connection.commit()
-    cursor.execute("CREATE TABLE dbo.BaseWord (Word NVARCHAR(50) NOT NULL, Length INT NOT NULL, PRIMARY KEY (Word));")
-    connection.commit()
     dictionaryFolder = "Dictionaries"
     fileList = []
+    count = 0
+    t0 = time.time()
+
     for (dirpath, dirnames, filenames) in walk(dictionaryFolder + "/"):
         fileList.extend(filenames)
         break
@@ -246,17 +255,24 @@ def LoadDictionaries(connection, cursor):
     for files in fileList:
         dictionaryFileReader = open(dictionaryFolder + "/" + files, 'r', encoding="utf-8-sig")
         for word in dictionaryFileReader:
+            count += 1
             word = word.rstrip("\n")
             if(word == ""):
                 continue
             if(word.__contains__("'")):
                 word = ReplaceSingleQuote(word)
             if(cursor.execute("SELECT COUNT(*) FROM dbo.BaseWord "
-                              "WHERE Word = '" + word + "'").fetchone()[0] == 0 or 1==1):
+                              "WHERE Word = '" + word + "'").fetchone()[0] == 0):
                 insertStatement = "INSERT INTO dbo.BaseWord (Word, Length) VALUES " \
                               "('" + word + "', " + str(len(word)) + ")"
                 cursor.execute(insertStatement)
                 connection.commit()
+
+    t1 = time.time()
+    print("Total words loaded = " + str(count))
+    print("Total time for file = " + str(time.time() - t0))
+    print("Average time for file = " + str((t1 - t0)/count))
+    print("Average number of inserts per second = " + str(1/((t1 - t0)/count)))
 
 def main():
     ##Setup connection to SQL Server
@@ -268,6 +284,10 @@ def main():
     CreateDatabase(connection, cursor)
     setUpAvailability(connection, cursor)
     #SetUpCharacterSet(connection, cursor)
+
+    ##Reset dictionaries, drop tables and recreate
+    if(input("Would you like to drop the dictionaries?('yes'/'no')") == "yes"):
+        ResetDictionaries(connection, cursor)
 
     ##Load dictionaries for base word compare (note that this method only loads unique words and will not create duplicates.
     if(input("Would you like to load the dictionaries?('yes'/'no')") == "yes"):
@@ -288,9 +308,11 @@ def main():
         originId = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
 
         t0 = time.time()
-
+        count = 0
         ##Loop through passwords in file and break them down and add to DB
         for password in passwordFileReader:
+
+            count += 1
 
             ##Trim password
             password = password.rstrip("\n")
@@ -337,9 +359,10 @@ def main():
             ##TODO Insert deleetified password
 
         t1 = time.time()
+        print("Total words loaded = " + str(count))
         print("Total time for file = " + str(t1 - t0))
-        print("Average time for file = " + str((t1 - t0)/10000))
-        print("Average number of inserts per second = " + str(1/((t1 - t0)/10000)))
+        print("Average time for file = " + str((t1 - t0)/count))
+        print("Average number of inserts per second = " + str(1/((t1 - t0)/count)))
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,7 @@ CREATE TABLE dbo.Password (
 	PasswordId INT NOT NULL IDENTITY (1, 1),
 	Password NVARCHAR(100) NOT NULL,
 	PasswordOrigin INT,
-	DateAdded DATETIME2,
+	DateAdded DATETIME2 DEFAULT GETDATE(),
 	Length INT,
 	Deleetified BIT NOT NULL,
 	OriginalPassword INT,
@@ -12,7 +12,7 @@ CREATE TABLE dbo.Password (
 CREATE TABLE dbo.PasswordOrigin (
 	OriginId INT NOT NULL IDENTITY (1, 1),
 	Origin NVARCHAR(100),
-	DateAdded DATETIME2,
+	DateAdded DATETIME2 DEFAULT GETDATE(),
 	Availability INT,
 	PRIMARY KEY (OriginId)
 );
@@ -29,6 +29,7 @@ CREATE TABLE dbo.NGrams (
 	NGram NVARCHAR(50) NOT NULL,
 	Placement INT,
 	Unsigned BIT,
+	IsWord BIT,
 	OriginalPassword INT NOT NULL,
 	PRIMARY KEY (NGramId)
 );
@@ -50,12 +51,6 @@ CREATE TABLE dbo.AdvancedMask (
 	PRIMARY KEY (MaskId)
 );
 
-
-CREATE TABLE dbo.BaseWord (
-	Word NVARCHAR(50) NOT NULL,
-	Length INT NOT NULL,
-	PRIMARY KEY (Word)
-);
 
 /*
 CREATE TABLE dbo.CharacterSet (
