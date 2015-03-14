@@ -215,13 +215,13 @@ def InsertSimpleMask(password, passwordId, connection, cursor):
 
 def main():
     ##Setup connection to SQL Server
-    cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=localhost;'
+    connection = pyodbc.connect('DRIVER={SQL Server};SERVER=localhost;'
                           'DATABASE=Malodorous;UID=sa;PWD=password')
-    cursor = cnxn.cursor()
+    cursor = connection.cursor()
     ##Drop and recreate the database
-    DropDatabase(cnxn, cursor)
-    CreateDatabase(cnxn, cursor)
-    #SetUpCharacterSet(cnxn, cursor)
+    DropDatabase(connection, cursor)
+    CreateDatabase(connection, cursor)
+    #SetUpCharacterSet(connection, cursor)
 
     ##Open training password folder
     trainingSetFolder = "Passwords"
@@ -249,34 +249,34 @@ def main():
                 escapedPassword = ReplaceSingleQuote(password)
 
             ##Insert password into DB and commit
-            InsertPassword(escapedPassword, cnxn, cursor)
+            InsertPassword(escapedPassword, connection, cursor)
 
             ##Get the inserted password ID
             passwordId = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
 
             ##Add password Advanced Masks
-            InsertAdvancedMask(password, passwordId, cnxn, cursor)
+            InsertAdvancedMask(password, passwordId, connection, cursor)
 
             ##Get password Character Placement
-            InsertCharacterPlacement(password, passwordId, cnxn, cursor)
+            InsertCharacterPlacement(password, passwordId, connection, cursor)
 
             ##Get password Complexity
-            InsertCharacterSet(password, passwordId, cnxn, cursor)
+            InsertCharacterSet(password, passwordId, connection, cursor)
 
             ##Insert Markov Chain
             if(len(password) > 1):
-                InsertMarkovChain(password, passwordId, cnxn, cursor)
+                InsertMarkovChain(password, passwordId, connection, cursor)
 
             if(len(password) > 2):
             ##Insert NGrams
-                InsertNGrams(password, passwordId, cnxn, cursor)
+                InsertNGrams(password, passwordId, connection, cursor)
 
             ##If password contains capitals insert Unsigned Ngrams
                 if (any(x.isupper() for x in password)):
-                    InsertNGramUnsigned(password, passwordId, cnxn, cursor)
+                    InsertNGramUnsigned(password, passwordId, connection, cursor)
 
             ##Insert Simple Mask
-            InsertSimpleMask(password, passwordId, cnxn, cursor)
+            InsertSimpleMask(password, passwordId, connection, cursor)
 
 if __name__ == "__main__":
     main()
