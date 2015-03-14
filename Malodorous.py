@@ -4,6 +4,7 @@ import pyodbc
 import datetime
 from os import walk
 import time
+import codecs
 
 def InsertAdvancedMask(password, passwordId, connection, cursor):
     cursor.execute("INSERT INTO dbo.AdvancedMask "
@@ -57,8 +58,7 @@ def InsertCharacterPlacement(password, passwordId, connection, cursor):
     for character in GetCharacterPlacement(password):
         InsertStatement += "('" + character[0] + "', " + character[1] + ", " + str(passwordId) + "),"
 
-    InsertStatement = InsertStatement[:-1]
-    cursor.execute(InsertStatement)
+    cursor.execute(InsertStatement[:-1])
     connection.commit()
 
 def GetCharacterPlacement(password):
@@ -143,8 +143,7 @@ def InsertMarkovChain(password, passwordId, connection, cursor):
                       "(FirstCharacter, SecondCharacter, OriginalPassword) VALUES "
     for chain in GetMarkovChain(password):
         InsertStatement += "('" + chain[0] + "', '" + chain[1] + "', " + str(passwordId) + "),"
-    InsertStatement = InsertStatement[:-1]
-    cursor.execute(InsertStatement)
+    cursor.execute(InsertStatement[:-1])
     connection.commit()
 
 def GetNGrams(password):
@@ -179,8 +178,7 @@ def InsertNGrams(password, passwordId, connection, cursor):
         InsertStatement += "(" + str(nGram[0]) + ", '" + nGram[1] + "', " + \
                            str(nGram[2]) + ", " + str(nGram[3]) + ", " + \
                            str(passwordId) + "),"
-    InsertStatement = InsertStatement[:-1]
-    cursor.execute(InsertStatement)
+    cursor.execute(InsertStatement[:-1])
     connection.commit()
 
 def InsertNGramUnsigned(password, passwordId, connection, cursor):
@@ -190,8 +188,7 @@ def InsertNGramUnsigned(password, passwordId, connection, cursor):
         InsertStatement += "(" + str(nGram[0]) + ", '" + nGram[1] + "', " + \
                            str(nGram[2]) + ", " + str(nGram[3]) + ", " + \
                            str(passwordId) + "),"
-    InsertStatement = InsertStatement[:-1]
-    cursor.execute(InsertStatement)
+    cursor.execute(InsertStatement[:-1])
     connection.commit()
 
 def GetSimpleMask(password):
@@ -235,6 +232,31 @@ def AddPasswordOriginToDatabase(file, connection, cursor):
     cursor.execute("INSERT INTO PasswordOrigin (Origin, Availability, DateAdded) VALUES ('" + file + "', '" + availability + "', '" + str(datetime.datetime.now()) + "')")
     connection.commit()
 
+def LoadDictionaries(connection, cursor):
+    cursor.execute("DROP TABLE dbo.BaseWord")
+    connection.commit()
+    cursor.execute("CREATE TABLE dbo.BaseWord (Word NVARCHAR(50) NOT NULL, Length INT NOT NULL, PRIMARY KEY (Word));")
+    connection.commit()
+    dictionaryFolder = "Dictionaries"
+    fileList = []
+    for (dirpath, dirnames, filenames) in walk(dictionaryFolder + "/"):
+        fileList.extend(filenames)
+        break
+
+    for files in fileList:
+        dictionaryFileReader = open(dictionaryFolder + "/" + files, 'r', encoding="utf-8-sig")
+        for word in dictionaryFileReader:
+            word = word.rstrip("\n")
+            if(word == ""):
+                continue
+            if(word.__contains__("'")):
+                word = ReplaceSingleQuote(word)
+            if(cursor.execute("SELECT COUNT(*) FROM dbo.BaseWord "
+                              "WHERE Word = '" + word + "'").fetchone()[0] == 0 or 1==1):
+                insertStatement = "INSERT INTO dbo.BaseWord (Word, Length) VALUES " \
+                              "('" + word + "', " + str(len(word)) + ")"
+                cursor.execute(insertStatement)
+                connection.commit()
 
 def main():
     ##Setup connection to SQL Server
@@ -246,6 +268,10 @@ def main():
     CreateDatabase(connection, cursor)
     setUpAvailability(connection, cursor)
     #SetUpCharacterSet(connection, cursor)
+
+    ##Load dictionaries for base word compare (note that this method only loads unique words and will not create duplicates.
+    if(input("Would you like to load the dictionaries?('yes'/'no')") == "yes"):
+        LoadDictionaries(connection, cursor)
 
     ##Open training password folder
     trainingSetFolder = "Passwords"
@@ -309,8 +335,6 @@ def main():
             InsertSimpleMask(password, passwordId, connection, cursor)
 
             ##TODO Insert deleetified password
-
-            ##TODO Find base words in password
 
         t1 = time.time()
         print("Total time for file = " + str(t1 - t0))

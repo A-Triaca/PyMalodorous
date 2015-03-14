@@ -111,11 +111,6 @@ ADD FOREIGN KEY (OriginalPassword)
 REFERENCES Password (PasswordId);
 
 
-ALTER TABLE BaseWord
-ADD FOREIGN KEY (OriginalPassword)
-REFERENCES Password (PasswordId);
-
-
 ALTER TABLE SimpleMask
 ADD FOREIGN KEY (OriginalPassword)
 REFERENCES Password (PasswordId);
