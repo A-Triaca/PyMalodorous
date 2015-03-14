@@ -6,6 +6,6 @@ python:
   - "pypy"
 # command to install dependencies
 install:
-  - setuid root pip install --allow-external pyodbc --allow-unverified pyodbc pyodbc
+  - pip install --allow-external pyodbc --allow-unverified pyodbc pyodbc
 # command to run tests
 script: nosetests
