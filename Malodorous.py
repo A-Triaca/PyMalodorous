@@ -224,7 +224,10 @@ def GetAvailability(connection, cursor):
     catagories = cursor.execute("SELECT * FROM dbo.Availability")
     for option in catagories:
         message += str(option[0]) + " - " + option[1] + "\n"
-    return input(message)
+    availability = input(message)
+    catagory = cursor.execute("SELECT * FROM dbo.Availability WHERE AvailabilityId = " + availability).fetchone()[1]
+    print("You have chosen: " + catagory)
+    return availability
 
 def AddPasswordOriginToDatabase(file, connection, cursor):
     availability = GetAvailability(connection, cursor)
