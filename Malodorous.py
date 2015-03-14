@@ -114,6 +114,31 @@ def InsertCharacterSet(password, passwordId, connection, cursor):
     cursor.execute("INSERT INTO dbo.Complexity (CharacterSet, OriginalPassword) VALUES ('" + GetCharacterSet(password) + "', " + str(passwordId) + ")")
     connection.commit
 
+def GetMarkovChain(password):
+    chain = []
+    if(not password.__contains__("'")):
+        for i in range(len(password)-1):
+            chain.append((password[i], password[i+1]))
+    else:
+        for i in range(len(password)-1):
+            if(password[i] == "'" and password[i+1]):
+                chain.append(("''", "''"))
+            elif(password[i] == "'"):
+                chain.append(("''", password[i+1]))
+            elif(password[i+1] + "'"):
+                chain.append((password[i], "''"))
+            else:
+                chain.append((password[i], password[i+1]))
+    return chain
+
+def InsertMarkovChain(password, passwordId, connection, cursor):
+    InsertStatement = "INSERT INTO dbo.MarkovChain " \
+                      "(FirstCharacter, SecondCharacter, OriginalPassword) VALUES "
+    for chain in GetMarkovChain(password):
+        InsertStatement += "('" + chain[0] + "', '" + chain[1] + "', " + str(passwordId) + "),"
+    InsertStatement = InsertStatement[:-1]
+    cursor.execute(InsertStatement)
+    connection.commit()
 
 def main():
     ##Setup connection to SQL Server
@@ -164,6 +189,10 @@ def main():
 
             ##Get password Complexity
             InsertCharacterSet(password, passwordId, cnxn, cursor)
+
+            ##Insert Markov Chain
+            if(len(password) > 1):
+                InsertMarkovChain(password, passwordId, cnxn, cursor)
 
 if __name__ == "__main__":
     main()
