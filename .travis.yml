@@ -6,6 +6,6 @@ python:
   - "pypy"
 # command to install dependencies
 install:
-  - pip install Libraries/pyodbc-3.0.7.win32-py3.3.exe
+  - pip install https://pyodbc.googlecode.com/files/pyodbc-3.0.7.win32-py3.3.exe
 # command to run tests
 script: nosetests
