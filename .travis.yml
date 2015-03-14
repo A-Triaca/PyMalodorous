@@ -5,7 +5,7 @@ python:
   # maintainers to fix their pypy-dev package.
   - "pypy"
 # command to install dependencies
-install:
-  - pip install https://pyodbc.googlecode.com/files/pyodbc-3.0.7.win32-py3.3.exe --allow-all-external
+#install:
+#  - pip install https://pyodbc.googlecode.com/files/pyodbc-3.0.7.win32-py3.3.exe --allow-all-external
 # command to run tests
 script: nosetests
