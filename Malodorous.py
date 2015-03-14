@@ -4,10 +4,10 @@ import pyodbc
 import datetime
 from os import walk
 
-def InsertPasswordAdvancedMask(password, passwordId, connection, cursor):
+def InsertAdvancedMask(password, passwordId, connection, cursor):
     cursor.execute("INSERT INTO dbo.AdvancedMask "
                        "(Mask, OriginalPassword) "
-                       "VALUES ('" + GetPasswordAdvancedMask(password) + "', " + str(passwordId) + ");")
+                       "VALUES ('" + GetAdvancedMask(password) + "', " + str(passwordId) + ");")
     connection.commit()
 
 def ReplaceSingleQuote(password):
@@ -43,18 +43,18 @@ def InsertPassword(password, connection, cursor):
                    str(datetime.datetime.now()) + "', '" + str(False) + "');")
     connection.commit()
 
-def InsertPasswordCharacterPlacement(password, passwordId, connection, cursor):
+def InsertCharacterPlacement(password, passwordId, connection, cursor):
     InsertStatement = "INSERT INTO dbo.CharacterPlacement " \
                       "(Character, Placement, OriginalPassword) VALUES "
 
-    for character in GetPasswordCharacterPlacement(password):
+    for character in GetCharacterPlacement(password):
         InsertStatement += "('" + character[0] + "', " + character[1] + ", " + str(passwordId) + "),"
 
     InsertStatement = InsertStatement[:-1]
     cursor.execute(InsertStatement)
     connection.commit()
 
-def GetPasswordCharacterPlacement(password):
+def GetCharacterPlacement(password):
     characterList = []
     if(not password.__contains__("'")):
         for i in range(password.__len__()):
@@ -67,7 +67,7 @@ def GetPasswordCharacterPlacement(password):
                 characterList.append((password[i], str(i)))
     return characterList
 
-def GetPasswordAdvancedMask(password):
+def GetAdvancedMask(password):
     advancedMask = ""
 
     for character in password:
@@ -140,6 +140,79 @@ def InsertMarkovChain(password, passwordId, connection, cursor):
     cursor.execute(InsertStatement)
     connection.commit()
 
+def GetNGrams(password):
+    nGram = []
+    if(not password.__contains__("'")):
+        for i in range(2, len(password)):
+            for j in range(len(password)-i + 1):
+                nGram.append((i, password[j:j+i], j, 0))
+    else:
+        for i in range(2, len(password)):
+            for j in range(len(password)-i + 1):
+                nGram.append((i, ReplaceSingleQuote(password[j:j+i]), j, 0))
+    return  nGram
+
+def GetNGramsUnsigned(password):
+    nGram = []
+    password = password.lower()
+    if(not password.__contains__("'")):
+        for i in range(2, len(password)):
+            for j in range(len(password)-i + 1):
+                nGram.append((i, password[j:j+i], j, 1))
+    else:
+        for i in range(2, len(password)):
+            for j in range(len(password)-i + 1):
+                nGram.append((i, ReplaceSingleQuote(password[j:j+i]), j, 1))
+    return  nGram
+
+def InsertNGrams(password, passwordId, connection, cursor):
+    InsertStatement = "INSERT INTO dbo.NGrams " \
+                      "(Lenth ,NGram ,Placement, Unsigned, OriginalPassword) VALUES "
+    for nGram in GetNGrams(password):
+        InsertStatement += "(" + str(nGram[0]) + ", '" + nGram[1] + "', " + \
+                           str(nGram[2]) + ", " + str(nGram[3]) + ", " + \
+                           str(passwordId) + "),"
+    InsertStatement = InsertStatement[:-1]
+    cursor.execute(InsertStatement)
+    connection.commit()
+
+def InsertNGramUnsigned(password, passwordId, connection, cursor):
+    InsertStatement = "INSERT INTO dbo.NGrams " \
+                      "(Lenth ,NGram ,Placement, Unsigned, OriginalPassword) VALUES "
+    for nGram in GetNGramsUnsigned(password):
+        InsertStatement += "(" + str(nGram[0]) + ", '" + nGram[1] + "', " + \
+                           str(nGram[2]) + ", " + str(nGram[3]) + ", " + \
+                           str(passwordId) + "),"
+    InsertStatement = InsertStatement[:-1]
+    cursor.execute(InsertStatement)
+    connection.commit()
+
+def GetSimpleMask(password):
+    prev = mask = ""
+    for i in range(len(password)):
+        curr = GetTypeOfCharacter(password[i])
+        if (curr != prev):
+            prev = curr
+            mask += curr
+    return mask
+
+def GetTypeOfCharacter(character):
+    if (character.islower()):
+        return "$l"
+    elif (character.isupper()):
+        return "$u"
+    elif (character.isdigit()):
+        return "$d"
+    else:
+        return "$s"
+
+def InsertSimpleMask(password, passwordId, connection, cursor):
+    InsertStatement = "INSERT INTO dbo.SimpleMask " \
+                      "(Mask, OriginalPassword) VALUES "
+    InsertStatement += "('" + GetSimpleMask(password) + "', " + str(passwordId) + ")"
+    cursor.execute(InsertStatement)
+    connection.commit()
+
 def main():
     ##Setup connection to SQL Server
     cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=localhost;'
@@ -182,10 +255,10 @@ def main():
             passwordId = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
 
             ##Add password Advanced Masks
-            InsertPasswordAdvancedMask(password, passwordId, cnxn, cursor)
+            InsertAdvancedMask(password, passwordId, cnxn, cursor)
 
             ##Get password Character Placement
-            InsertPasswordCharacterPlacement(password, passwordId, cnxn, cursor)
+            InsertCharacterPlacement(password, passwordId, cnxn, cursor)
 
             ##Get password Complexity
             InsertCharacterSet(password, passwordId, cnxn, cursor)
@@ -193,6 +266,17 @@ def main():
             ##Insert Markov Chain
             if(len(password) > 1):
                 InsertMarkovChain(password, passwordId, cnxn, cursor)
+
+            if(len(password) > 2):
+            ##Insert NGrams
+                InsertNGrams(password, passwordId, cnxn, cursor)
+
+            ##If password contains capitals insert Unsigned Ngrams
+                if (any(x.isupper() for x in password)):
+                    InsertNGramUnsigned(password, passwordId, cnxn, cursor)
+
+            ##Insert Simple Mask
+            InsertSimpleMask(password, passwordId, cnxn, cursor)
 
 if __name__ == "__main__":
     main()
