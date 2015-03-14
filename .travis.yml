@@ -7,5 +7,7 @@ python:
 # command to install dependencies
 install:
   - pip install https://pyodbc.googlecode.com/files/pyodbc-3.0.7.win32-py3.3.exe
+  - pip install git+https://github.com/shotgunsoftware/python-api.git
+  - pip uninstall git+https://github.com/shotgunsoftware/python-api.git
 # command to run tests
 script: nosetests
