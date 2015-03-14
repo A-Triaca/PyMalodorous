@@ -52,12 +52,9 @@ CREATE TABLE dbo.AdvancedMask (
 
 
 CREATE TABLE dbo.BaseWord (
-	WordId INT NOT NULL IDENTITY (1, 1),
 	Word NVARCHAR(50) NOT NULL,
-	Position INT NOT NULL,
 	Length INT NOT NULL,
-	OriginalPassword INT NOT NULL,
-	PRIMARY KEY (WordId)
+	PRIMARY KEY (Word)
 );
 
 /*

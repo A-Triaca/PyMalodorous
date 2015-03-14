@@ -3,6 +3,7 @@ __author__ = 'Alex'
 import pyodbc
 import datetime
 from os import walk
+import time
 
 def InsertAdvancedMask(password, passwordId, connection, cursor):
     cursor.execute("INSERT INTO dbo.AdvancedMask "
@@ -260,6 +261,8 @@ def main():
         AddPasswordOriginToDatabase(files, connection, cursor)
         originId = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
 
+        t0 = time.time()
+
         ##Loop through passwords in file and break them down and add to DB
         for password in passwordFileReader:
 
@@ -305,10 +308,14 @@ def main():
             ##Insert Simple Mask
             InsertSimpleMask(password, passwordId, connection, cursor)
 
-            ##Insert deleetified password
+            ##TODO Insert deleetified password
 
-            ##Find base words in password
+            ##TODO Find base words in password
 
+        t1 = time.time()
+        print("Total time for file = " + str(t1 - t0))
+        print("Average time for file = " + str((t1 - t0)/10000))
+        print("Average number of inserts per second = " + str(1/((t1 - t0)/10000)))
 
 if __name__ == "__main__":
     main()
