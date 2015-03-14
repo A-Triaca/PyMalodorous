@@ -37,9 +37,15 @@ def SetUpCharacterSet(connection, cursor):
     cursor.execute(sql)
     connection.commit()
 
-def InsertPassword(password, connection, cursor):
-    cursor.execute("INSERT INTO dbo.Password (Password, Length, DateAdded, Deleetified) " \
-           "VALUES ('" + password + "', " + str(password.__len__()) + ", '" +
+def setUpAvailability(connection, cursor):
+    file = open("Database/Insert Into Availability.sql", 'r')
+    sql = " ".join(file.readlines())
+    cursor.execute(sql)
+    connection.commit()
+
+def InsertPassword(password, passwordOrigin, connection, cursor):
+    cursor.execute("INSERT INTO dbo.Password (Password, PasswordOrigin, Length, DateAdded, Deleetified) " \
+           "VALUES ('" + password + "', '" + str(passwordOrigin) + "', " + str(password.__len__()) + ", '" +
                    str(datetime.datetime.now()) + "', '" + str(False) + "');")
     connection.commit()
 
@@ -213,6 +219,19 @@ def InsertSimpleMask(password, passwordId, connection, cursor):
     cursor.execute(InsertStatement)
     connection.commit()
 
+def GetAvailability(connection, cursor):
+    message = "What is the difficulty of obtaining the database?\n"
+    catagories = cursor.execute("SELECT * FROM dbo.Availability")
+    for option in catagories:
+        message += str(option[0]) + " - " + option[1] + "\n"
+    return input(message)
+
+def AddPasswordOriginToDatabase(file, connection, cursor):
+    availability = GetAvailability(connection, cursor)
+    cursor.execute("INSERT INTO PasswordOrigin (Origin, Availability, DateAdded) VALUES ('" + file + "', '" + availability + "', '" + str(datetime.datetime.now()) + "')")
+    connection.commit()
+
+
 def main():
     ##Setup connection to SQL Server
     connection = pyodbc.connect('DRIVER={SQL Server};SERVER=localhost;'
@@ -221,6 +240,7 @@ def main():
     ##Drop and recreate the database
     DropDatabase(connection, cursor)
     CreateDatabase(connection, cursor)
+    setUpAvailability(connection, cursor)
     #SetUpCharacterSet(connection, cursor)
 
     ##Open training password folder
@@ -232,6 +252,10 @@ def main():
 
     for files in fileList:
         passwordFileReader = open(trainingSetFolder + "/" + files, 'r')
+
+        ##Add password origin to database
+        AddPasswordOriginToDatabase(files, connection, cursor)
+        originId = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
 
         ##Loop through passwords in file and break them down and add to DB
         for password in passwordFileReader:
@@ -249,7 +273,7 @@ def main():
                 escapedPassword = ReplaceSingleQuote(password)
 
             ##Insert password into DB and commit
-            InsertPassword(escapedPassword, connection, cursor)
+            InsertPassword(escapedPassword, originId, connection, cursor)
 
             ##Get the inserted password ID
             passwordId = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
@@ -277,6 +301,11 @@ def main():
 
             ##Insert Simple Mask
             InsertSimpleMask(password, passwordId, connection, cursor)
+
+            ##Insert deleetified password
+
+            ##Find base words in password
+
 
 if __name__ == "__main__":
     main()

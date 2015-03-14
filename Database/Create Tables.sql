@@ -1,6 +1,7 @@
 CREATE TABLE dbo.Password (
 	PasswordId INT NOT NULL IDENTITY (1, 1),
 	Password NVARCHAR(100) NOT NULL,
+	PasswordOrigin INT,
 	DateAdded DATETIME2,
 	Length INT,
 	Deleetified BIT NOT NULL,
@@ -8,6 +9,19 @@ CREATE TABLE dbo.Password (
 	PRIMARY KEY (PasswordId)
 );
 
+CREATE TABLE dbo.PasswordOrigin (
+	OriginId INT NOT NULL IDENTITY (1, 1),
+	Origin NVARCHAR(100),
+	DateAdded DATETIME2,
+	Availability INT,
+	PRIMARY KEY (OriginId)
+);
+
+CREATE TABLE dbo.Availability (
+	AvailabilityId INT NOT NULL IDENTITY (1, 1),
+	Description NVARCHAR(100),
+	PRIMARY KEY (AvailabilityId)
+);
 
 CREATE TABLE dbo.NGrams (
 	NGramId INT NOT NULL IDENTITY (1, 1),
@@ -116,4 +130,12 @@ REFERENCES Password (PasswordId);
 
 ALTER TABLE Complexity
 ADD FOREIGN KEY (OriginalPassword)
-REFERENCES Password (PasswordId)
+REFERENCES Password (PasswordId);
+
+ALTER TABLE Password
+ADD FOREIGN KEY (PasswordOrigin)
+REFERENCES PasswordOrigin (OriginId);
+
+ALTER TABLE PasswordOrigin
+ADD FOREIGN KEY (Availability)
+REFERENCES Availability (AvailabilityId);

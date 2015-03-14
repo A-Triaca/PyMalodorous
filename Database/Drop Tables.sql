@@ -7,4 +7,6 @@ CharacterPlacement,
 --CharacterSet,
 NGrams,
 MarkovChain,
-Password;
+Password,
+PasswordOrigin,
+Availability;
