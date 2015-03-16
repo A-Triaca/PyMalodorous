@@ -1,10 +1,8 @@
 __author__ = 'Alex'
 
 import pyodbc
-import datetime
 from os import walk
 import time
-import codecs
 
 def InsertAdvancedMask(password, passwordId, connection, cursor):
     cursor.execute("INSERT INTO dbo.AdvancedMask "
