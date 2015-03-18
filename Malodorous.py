@@ -3,21 +3,15 @@ __author__ = 'Alex'
 import pyodbc
 from os import walk
 import time
+import datetime
+import PasswordAnalysis
 
 def InsertAdvancedMask(password, passwordId, connection, cursor):
     cursor.execute("INSERT INTO dbo.AdvancedMask "
-                       "(Mask, OriginalPassword) "
-                       "VALUES ('" + GetAdvancedMask(password) + "', " + str(passwordId) + ");")
+                   "(Mask, OriginalPassword) "
+                   "VALUES ('" + PasswordAnalysis.GetAdvancedMask(password) + "', " +
+                   str(passwordId) + ");")
     connection.commit()
-
-def ReplaceSingleQuote(password):
-    tempPassword = ""
-    for i in range(password.__len__()):
-        if(password[i] == "'"):
-            tempPassword += "''"
-        else:
-            tempPassword += password[i]
-    return tempPassword
 
 def DropDatabase(connection, cursor):
     file = open("Database/Drop Tables.sql", 'r')
@@ -44,135 +38,40 @@ def setUpAvailability(connection, cursor):
     connection.commit()
 
 def InsertPassword(password, passwordOrigin, connection, cursor):
-    cursor.execute("INSERT INTO dbo.Password (Password, PasswordOrigin, Length, Deleetified) " \
+    cursor.execute("INSERT INTO dbo.Password (Password, PasswordOrigin, Length, DateAdded, Deleetified) " \
            "VALUES ('" + password + "', '" + str(passwordOrigin) + "', " +
-                   str(password.__len__()) + ", '" + str(False) + "');")
+                   str(password.__len__()) + ", " + str(datetime.datetime.now()) +
+                   "', '" + str(False) + "');")
     connection.commit()
 
 def InsertCharacterPlacement(password, passwordId, connection, cursor):
     InsertStatement = "INSERT INTO dbo.CharacterPlacement " \
                       "(Character, Placement, OriginalPassword) VALUES "
 
-    for character in GetCharacterPlacement(password):
+    for character in PasswordAnalysis.GetCharacterPlacement(password):
         InsertStatement += "('" + character[0] + "', " + character[1] + ", " + str(passwordId) + "),"
 
     cursor.execute(InsertStatement[:-1])
     connection.commit()
 
-def GetCharacterPlacement(password):
-    characterList = []
-    if(not password.__contains__("'")):
-        for i in range(password.__len__()):
-            characterList.append((password[i], str(i)))
-    else:
-        for i in range(password.__len__()):
-            if(password[i] == "'"):
-                characterList.append(("''", str(i)))
-            else:
-                characterList.append((password[i], str(i)))
-    return characterList
-
-def GetAdvancedMask(password):
-    advancedMask = ""
-
-    for character in password:
-        if(character.islower()):
-            advancedMask += "$l"
-        elif(character.isupper()):
-            advancedMask += "$u"
-        elif(character.isdigit()):
-            advancedMask += "$d"
-        else:
-            advancedMask += "$s"
-
-    return advancedMask
-
-def GetCharacterSet(password):
-    characterSet = ""
-    lower = upper = digit = special = False
-
-    for character in password:
-        if (character.islower()):
-            lower = True
-        elif (character.isupper()):
-            upper = True
-        elif (character.isdigit()):
-            digit = True
-        else:
-            special = True
-
-    if (lower and upper):
-        characterSet += "Alpha"
-    elif(lower):
-        characterSet += "Loweralpha"
-    elif(upper):
-        characterSet += "Upperalpha"
-
-    if (digit):
-        characterSet += "Numeric"
-    if (special):
-        characterSet += "Special"
-
-    return characterSet
-
 def InsertCharacterSet(password, passwordId, connection, cursor):
-    cursor.execute("INSERT INTO dbo.Complexity (CharacterSet, OriginalPassword) VALUES ('" + GetCharacterSet(password) + "', " + str(passwordId) + ")")
+    cursor.execute("INSERT INTO dbo.Complexity (CharacterSet, OriginalPassword) "
+                   "VALUES ('" + PasswordAnalysis.GetCharacterSet(password) + "', " +
+                   str(passwordId) + ")")
     connection.commit
-
-def GetMarkovChain(password):
-    chain = []
-    if(not password.__contains__("'")):
-        for i in range(len(password)-1):
-            chain.append((password[i], password[i+1]))
-    else:
-        for i in range(len(password)-1):
-            if(password[i] == "'" and password[i+1]):
-                chain.append(("''", "''"))
-            elif(password[i] == "'"):
-                chain.append(("''", password[i+1]))
-            elif(password[i+1] + "'"):
-                chain.append((password[i], "''"))
-            else:
-                chain.append((password[i], password[i+1]))
-    return chain
 
 def InsertMarkovChain(password, passwordId, connection, cursor):
     InsertStatement = "INSERT INTO dbo.MarkovChain " \
                       "(FirstCharacter, SecondCharacter, OriginalPassword) VALUES "
-    for chain in GetMarkovChain(password):
+    for chain in PasswordAnalysis.GetMarkovChain(password):
         InsertStatement += "('" + chain[0] + "', '" + chain[1] + "', " + str(passwordId) + "),"
     cursor.execute(InsertStatement[:-1])
     connection.commit()
 
-def GetNGrams(password):
-    nGram = []
-    if(not password.__contains__("'")):
-        for i in range(2, len(password)):
-            for j in range(len(password)-i + 1):
-                nGram.append((i, password[j:j+i], j, 0))
-    else:
-        for i in range(2, len(password)):
-            for j in range(len(password)-i + 1):
-                nGram.append((i, ReplaceSingleQuote(password[j:j+i]), j, 0))
-    return  nGram
-
-def GetNGramsUnsigned(password):
-    nGram = []
-    password = password.lower()
-    if(not password.__contains__("'")):
-        for i in range(2, len(password)):
-            for j in range(len(password)-i + 1):
-                nGram.append((i, password[j:j+i], j, 1))
-    else:
-        for i in range(2, len(password)):
-            for j in range(len(password)-i + 1):
-                nGram.append((i, ReplaceSingleQuote(password[j:j+i]), j, 1))
-    return  nGram
-
 def InsertNGrams(password, passwordId, connection, cursor):
     InsertStatement = "INSERT INTO dbo.NGrams " \
                       "(Lenth ,NGram ,Placement, Unsigned, IsWord, OriginalPassword) VALUES "
-    for nGram in GetNGrams(password):
+    for nGram in PasswordAnalysis.GetNGrams(password):
         base = cursor.execute("SELECT COUNT(*) FROM dbo.BaseWord WHERE Word = '" + nGram[1] + "'").fetchone()[0]
         InsertStatement += "(" + str(nGram[0]) + ", '" + nGram[1] + "', " + \
                            str(nGram[2]) + ", " + str(nGram[3]) + ", " + str(base) + ", " + \
@@ -183,7 +82,7 @@ def InsertNGrams(password, passwordId, connection, cursor):
 def InsertNGramUnsigned(password, passwordId, connection, cursor):
     InsertStatement = "INSERT INTO dbo.NGrams " \
                       "(Lenth ,NGram ,Placement, Unsigned, IsWord, OriginalPassword) VALUES "
-    for nGram in GetNGramsUnsigned(password):
+    for nGram in PasswordAnalysis.GetNGramsUnsigned(password):
         base = cursor.execute("SELECT COUNT(*) FROM dbo.BaseWord WHERE Word = '" + nGram[1] + "'").fetchone()[0]
         InsertStatement += "(" + str(nGram[0]) + ", '" + nGram[1] + "', " + \
                            str(nGram[2]) + ", " + str(nGram[3]) + ", " + str(base) + ", " + \
@@ -191,33 +90,14 @@ def InsertNGramUnsigned(password, passwordId, connection, cursor):
     cursor.execute(InsertStatement[:-1])
     connection.commit()
 
-def GetSimpleMask(password):
-    prev = mask = ""
-    for i in range(len(password)):
-        curr = GetTypeOfCharacter(password[i])
-        if (curr != prev):
-            prev = curr
-            mask += curr
-    return mask
-
-def GetTypeOfCharacter(character):
-    if (character.islower()):
-        return "$l"
-    elif (character.isupper()):
-        return "$u"
-    elif (character.isdigit()):
-        return "$d"
-    else:
-        return "$s"
-
 def InsertSimpleMask(password, passwordId, connection, cursor):
     InsertStatement = "INSERT INTO dbo.SimpleMask " \
                       "(Mask, OriginalPassword) VALUES "
-    InsertStatement += "('" + GetSimpleMask(password) + "', " + str(passwordId) + ")"
+    InsertStatement += "('" + PasswordAnalysis.GetSimpleMask(password) + "', " + str(passwordId) + ")"
     cursor.execute(InsertStatement)
     connection.commit()
 
-def GetAvailability( cursor):
+def GetAvailability(cursor):
     message = "What is the difficulty of obtaining the database?\n"
     catagories = cursor.execute("SELECT * FROM dbo.Availability")
     for option in catagories:
@@ -258,7 +138,7 @@ def LoadDictionaries(connection, cursor):
             if(word == ""):
                 continue
             if(word.__contains__("'")):
-                word = ReplaceSingleQuote(word)
+                word = PasswordAnalysis.ReplaceSingleQuote(word)
             if(cursor.execute("SELECT COUNT(*) FROM dbo.BaseWord "
                               "WHERE Word = '" + word + "'").fetchone()[0] == 0):
                 insertStatement = "INSERT INTO dbo.BaseWord (Word, Length) VALUES " \
@@ -322,7 +202,7 @@ def main():
             ##Escape single quotes
             escapedPassword = password
             if(password.__contains__("'")):
-                escapedPassword = ReplaceSingleQuote(password)
+                escapedPassword = PasswordAnalysis.ReplaceSingleQuote(password)
 
             ##Insert password into DB and commit
             InsertPassword(escapedPassword, originId, connection, cursor)
