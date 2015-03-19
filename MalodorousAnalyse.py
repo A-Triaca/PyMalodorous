@@ -4,17 +4,17 @@ import time
 import pyodbc
 from os import walk
 import datetime
-import Malodorous
-import PasswordAnalysis
+import PasswordAnalysis as Analyse
+import DataAccess as Database
 
 def ResetPassword(connection, cursor):
     ##Drop table
-    file = open("Database/Drop Tables Analysis.sql", 'r')
+    file = open("Database/Drop Tables Analysis.sql")
     sql = " ".join(file.readlines())
     cursor.execute(sql)
     connection.commit()
     ##Create table
-    file = open("Database/Create Tables Analysis.sql", 'r')
+    file = open("Database/Create Tables Analysis.sql")
     sql = " ".join(file.readlines())
     cursor.execute(sql)
     connection.commit()
@@ -42,10 +42,11 @@ def AnalysePasswordMakeup(password):
     #If in dictionary print that it is and print dictionary
     return result
 
-def AnaylseAdvancedMask(password):
-    result = 0.0
-    advancedMask = PasswordAnalysis.GetAdvancedMask(password)
-    return result
+def AnalyseAdvancedMask(password):
+    advancedMask = Analyse.AdvancedMask(password)
+    advancedMaskCount = Database.GetAdvancedMaskCount(advancedMask)
+    advancedMaskRank = Database.GetAdvancedMaskRank(advancedMask)
+    return (advancedMaskRank * advancedMaskCount)
 
 def AnalyseCharacterPlacement(password):
     result = 0.0
@@ -62,7 +63,7 @@ def AnalyseMarkovChain(password):
 
     return result
 
-def AnaylseNGrams(password):
+def AnalyseNGrams(password):
     result = 0.0
 
     return result
@@ -80,11 +81,11 @@ def AnalyseSimpleMask(password):
 def AnalysePassword(password):
     result = 0.0
     result += AnalysePasswordMakeup(password)
-    result += AnaylseAdvancedMask(password)
+    result += AnalyseAdvancedMask(password)
     result += AnalyseCharacterPlacement(password)
     result += AnalyseCharacterSet(password)
     result += AnalyseMarkovChain(password)
-    result += AnaylseNGrams(password)
+    result += AnalyseNGrams(password)
     result += AnalyseNGramUnsigned(password)
     result += AnalyseSimpleMask(password)
     return result
@@ -113,16 +114,16 @@ def main():
             break
         ##Run through folder and read in all files
         for files in fileList:
-            wordFileReader = open(analysisFolder + "/" + files, 'r')
+            passwordFileReader = open(analysisFolder + "/" + files)
             ##Run through each file and read in each word
-            for password in files:
+            for password in passwordFileReader:
                 ##Analyse password
                 if(not password == ""):
                     InsertAnalysedPassword(connection, cursor, files, password)
 
     else:
         ##Analyse single password
-        print("Result for " + inputPassword + " is " + AnalysePassword(inputPassword))
+        print("Result for " + inputPassword + " is " + str(AnalysePassword(inputPassword)))
 
     t1 = time.time()
     print("Total time taken to analyse: " + str(t1-t0))

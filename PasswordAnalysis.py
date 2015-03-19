@@ -9,7 +9,7 @@ def ReplaceSingleQuote(password):
             tempPassword += password[i]
     return tempPassword
 
-def GetCharacterPlacement(password):
+def CharacterPlacement(password):
     characterList = []
     if(not password.__contains__("'")):
         for i in range(password.__len__()):
@@ -22,7 +22,7 @@ def GetCharacterPlacement(password):
                 characterList.append((password[i], str(i)))
     return characterList
 
-def GetAdvancedMask(password):
+def AdvancedMask(password):
     advancedMask = ""
 
     for character in password:
@@ -37,7 +37,7 @@ def GetAdvancedMask(password):
 
     return advancedMask
 
-def GetCharacterSet(password):
+def CharacterSet(password):
     characterSet = ""
     lower = upper = digit = special = False
 
@@ -65,7 +65,7 @@ def GetCharacterSet(password):
 
     return characterSet
 
-def GetMarkovChain(password):
+def MarkovChain(password):
     chain = []
     if(not password.__contains__("'")):
         for i in range(len(password)-1):
@@ -82,7 +82,7 @@ def GetMarkovChain(password):
                 chain.append((password[i], password[i+1]))
     return chain
 
-def GetNGrams(password):
+def NGrams(password):
     nGram = []
     if(not password.__contains__("'")):
         for i in range(2, len(password)):
@@ -94,7 +94,7 @@ def GetNGrams(password):
                 nGram.append((i, ReplaceSingleQuote(password[j:j+i]), j, 0))
     return  nGram
 
-def GetNGramsUnsigned(password):
+def NGramsUnsigned(password):
     nGram = []
     password = password.lower()
     if(not password.__contains__("'")):
@@ -107,16 +107,16 @@ def GetNGramsUnsigned(password):
                 nGram.append((i, ReplaceSingleQuote(password[j:j+i]), j, 1))
     return  nGram
 
-def GetSimpleMask(password):
+def SimpleMask(password):
     prev = mask = ""
     for i in range(len(password)):
-        curr = GetTypeOfCharacter(password[i])
+        curr = TypeOfCharacter(password[i])
         if (curr != prev):
             prev = curr
             mask += curr
     return mask
 
-def GetTypeOfCharacter(character):
+def TypeOfCharacter(character):
     if (character.islower()):
         return "$l"
     elif (character.isupper()):
