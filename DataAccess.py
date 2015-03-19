@@ -23,3 +23,21 @@ def GetAdvancedMaskRank(mask):
     if(result == None):
         return 0
     return result[0]
+
+def GetCharacterSetCount(characterSet):
+    result =  cursor.execute("SELECT COUNT(*) "
+                             "FROM dbo.Complexity "
+                             "WHERE CharacterSet = '" + characterSet + "'").fetchone()
+    if(result == None):
+        return 0
+    return result[0]
+
+def GetCharacterSetRank(characterSet):
+    result =  cursor.execute("SELECT R.Rank "
+                             "FROM "
+                             "(SELECT CharacterSet, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
+                             "FROM dbo.Complexity GROUP BY CharacterSet) AS R "
+                             "WHERE R.CharacterSet = '" + characterSet + "'").fetchone()
+    if(result == None):
+        return 0
+    return result[0]

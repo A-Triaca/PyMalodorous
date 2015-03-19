@@ -45,7 +45,9 @@ def AnalysePasswordMakeup(password):
 def AnalyseAdvancedMask(password):
     advancedMask = Analyse.AdvancedMask(password)
     advancedMaskCount = Database.GetAdvancedMaskCount(advancedMask)
+    print("Advanced Mask Count = " + str(advancedMaskCount))
     advancedMaskRank = Database.GetAdvancedMaskRank(advancedMask)
+    print("Advanced Mask Rank = " + str(advancedMaskRank))
     return (advancedMaskRank * advancedMaskCount)
 
 def AnalyseCharacterPlacement(password):
@@ -54,9 +56,12 @@ def AnalyseCharacterPlacement(password):
     return result
 
 def AnalyseCharacterSet(password):
-    result = 0.0
-
-    return result
+    characterSet = Analyse.CharacterSet(password)
+    characterSetCount = Database.GetCharacterSetCount(characterSet)
+    print("Character Set Count = " + str(characterSetCount))
+    characterSetRank = Database.GetCharacterSetRank(characterSet)
+    print("Character Set Rank = " + str(characterSetRank))
+    return (characterSetCount * characterSetRank)
 
 def AnalyseMarkovChain(password):
     result = 0.0
