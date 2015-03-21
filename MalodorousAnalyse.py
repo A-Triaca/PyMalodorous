@@ -49,11 +49,11 @@ def AnalysePasswordLength(password, connection, cursor):
 
 def AnalyseAdvancedMask(password, connection, cursor):
     advancedMask = Analyse.AdvancedMask(password)
-    advancedMaskCount = Database.GetAdvancedMaskCount(advancedMask, connection, cursor)
-    print("Advanced Mask Count = " + str(advancedMaskCount))
+    # advancedMaskCount = Database.GetAdvancedMaskCount(advancedMask, connection, cursor)
+    # print("Advanced Mask Count = " + str(advancedMaskCount))
     advancedMaskRank = Database.GetAdvancedMaskRank(advancedMask, connection, cursor)
     print("Advanced Mask Rank = " + str(advancedMaskRank))
-    return (advancedMaskRank + advancedMaskCount)/2
+    return (advancedMaskRank)
 
 def AnalyseCharacterPlacement(password, connection, cursor):
     result = 0.0
@@ -65,11 +65,11 @@ def AnalyseCharacterPlacement(password, connection, cursor):
 
 def AnalyseCharacterSet(password, connection, cursor):
     characterSet = Analyse.CharacterSet(password)
-    characterSetCount = Database.GetCharacterSetCount(characterSet, connection, cursor)
-    print("Character Set Count = " + str(characterSetCount))
+    # characterSetCount = Database.GetCharacterSetCount(characterSet, connection, cursor)
+    # print("Character Set Count = " + str(characterSetCount))
     characterSetRank = Database.GetCharacterSetRank(characterSet, connection, cursor)
     print("Character Set Rank = " + str(characterSetRank))
-    return (characterSetCount + characterSetRank)/2
+    return (characterSetRank)
 
 def AnalyseMarkovChain(password, connection, cursor):
     result = 0.0
@@ -97,30 +97,49 @@ def AnalyseNGramUnsigned(password, connection, cursor):
 
 def AnalyseSimpleMask(password, connection, cursor):
     simpleMask = Analyse.SimpleMask(password)
-    simpleMaskCount = Database.GetSimpleMaskCount(simpleMask, connection, cursor)
-    print("Simple Mask Count = " + str(simpleMaskCount))
+    # simpleMaskCount = Database.GetSimpleMaskCount(simpleMask, connection, cursor)
+    # print("Simple Mask Count = " + str(simpleMaskCount))
     simpleMaskRank = Database.GetSimpleMaskRank(simpleMask, connection, cursor)
     print("Simple Mask Rank = " + str(simpleMaskRank))
-    return (simpleMaskRank + simpleMaskCount)/2
+    return (simpleMaskRank)
 
 def AnalysePassword(password, connection, cursor):
     result = 0.0
     numberOfTests = 5
+    ti0 = time.time()
     IsPasswordInDictionary(password, connection, cursor)
+    print(time.time() - ti0)
+    ti0 = time.time()
     result += AnalysePasswordLength(password, connection, cursor)
+    print(time.time() - ti0)
+    ti0 = time.time()
     result += AnalyseAdvancedMask(password, connection, cursor)
+    print(time.time() - ti0)
+    ti0 = time.time()
     result += AnalyseCharacterPlacement(password, connection, cursor)
+    print(time.time() - ti0)
+    ti0 = time.time()
     result += AnalyseCharacterSet(password, connection, cursor)
+    print(time.time() - ti0)
+    ti0 = time.time()
     if(len(password) > 1):
         result += AnalyseMarkovChain(password, connection, cursor)
+        print(time.time() - ti0)
+        ti0 = time.time()
         numberOfTests += 1
     if(len(password) > 2):
         result += AnalyseNGrams(password, connection, cursor)
+        print(time.time() - ti0)
+        ti0 = time.time()
         numberOfTests += 1
         if (any(x.isupper() for x in password)):
             result += AnalyseNGramUnsigned(password, connection, cursor)
+            print(time.time() - ti0)
+            ti0 = time.time()
             numberOfTests += 1
     result += AnalyseSimpleMask(password, connection, cursor)
+    print(time.time() - ti0)
+    ti0 = time.time()
     print("Password ranking for \"" + password + "\" is " + str(result/numberOfTests))
     return result/numberOfTests
 
@@ -157,7 +176,7 @@ def main():
 
     else:
         ##Analyse single password
-        print("Result for " + inputPassword + " is " + str(AnalysePassword(inputPassword, connection, cursor)))
+        AnalysePassword(inputPassword, connection, cursor)
 
     t1 = time.time()
     print("Total time taken to analyse: " + str(t1-t0))

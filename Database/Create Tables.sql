@@ -25,7 +25,7 @@ CREATE TABLE dbo.Availability (
 
 CREATE TABLE dbo.NGrams (
 	NGramId INT NOT NULL IDENTITY (1, 1),
-	Lenth INT NOT NULL,
+	Length INT NOT NULL,
 	NGram NVARCHAR(50) NOT NULL,
 	Placement INT,
 	Unsigned BIT,

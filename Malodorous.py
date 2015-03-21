@@ -73,7 +73,7 @@ def InsertMarkovChain(password, passwordId, connection, cursor):
 
 def InsertNGrams(password, passwordId, connection, cursor):
     InsertStatement = "INSERT INTO dbo.NGrams " \
-                      "(Lenth ,NGram ,Placement, Unsigned, IsWord, OriginalPassword) VALUES "
+                      "(Length ,NGram ,Placement, Unsigned, IsWord, OriginalPassword) VALUES "
     args = []
     for nGram in Analyse.NGrams(password):
         base = cursor.execute("SELECT COUNT(*) FROM dbo.BaseWord WHERE Word = ?", nGram[1]).fetchone()[0]

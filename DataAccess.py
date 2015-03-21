@@ -1,3 +1,5 @@
+import time
+
 __author__ = 'Alex'
 
 def GetAdvancedMaskCount(mask, connection, cursor):
@@ -123,12 +125,12 @@ def GetNGramRank(nGram, connection, cursor):
     result = cursor.execute("DECLARE @MaxRank INT "
                             "SELECT @MaxRank=DENSE_RANK() OVER (ORDER BY COUNT(*)) "
                             "FROM dbo.NGrams "
-                            "WHERE Unsigned = 0 "
+                            "WHERE Unsigned = 0 AND Lenth = " + str(len(nGram)) + " "
                             "GROUP BY NGram "
                             "SELECT CAST(R.Rank AS float)/CAST(@MaxRank AS float) FROM "
                             "(SELECT NGram, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
                             "FROM dbo.NGrams "
-                            "WHERE Unsigned = 0 "
+                            "WHERE Unsigned = 0 AND Lenth = " + str(len(nGram)) + " "
                             "GROUP BY NGram) AS R "
                             "WHERE R.NGram = ?", nGram).fetchone()
     if(result == None):
@@ -139,12 +141,12 @@ def GetNGramUnsignedRank(nGram, connection, cursor):
     result = cursor.execute("DECLARE @MaxRank INT "
                             "SELECT @MaxRank=DENSE_RANK() OVER (ORDER BY COUNT(*)) "
                             "FROM dbo.NGrams "
-                            "WHERE Unsigned = 1 "
+                            "WHERE Unsigned = 1 AND Lenth = " + str(len(nGram)) + " "
                             "GROUP BY NGram "
                             "SELECT CAST(R.Rank AS float)/CAST(@MaxRank AS float) FROM "
                             "(SELECT NGram, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
                             "FROM dbo.NGrams "
-                            "WHERE Unsigned = 1 "
+                            "WHERE Unsigned = 1 AND Lenth = " + str(len(nGram)) + " "
                             "GROUP BY NGram) AS R "
                             "WHERE R.NGram = ?", nGram).fetchone()
     if(result == None):
