@@ -142,7 +142,7 @@ def LoadDictionaries(connection, cursor):
         for word in dictionaryFileReader:
             count += 1
             word = word.rstrip("\n")
-            if(word == ""):
+            if(word == "" or word.startswith("#") or len(word) < 3):
                 continue
             if(word.__contains__("'")):
                 word = Analyse.ReplaceSingleQuote(word)
@@ -201,6 +201,7 @@ def main():
 
             ##Trim password
             password = password.rstrip("\n")
+            password = password.lstrip()
 
             ##Remove blank passwords
             if(password == ""):
