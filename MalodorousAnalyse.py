@@ -29,8 +29,8 @@ def InsertAnalysedPassword(connection, cursor, files, word):
     ##File origin
     InsertStatement += "'" + files + "', "
     ##Analysis
-    result = AnalysePassword(word)
-    InsertStatement += str(result) + ", "
+    result = AnalysePassword(word, connection, cursor)
+    InsertStatement += "CAST(" + str(result) + " AS float), "
     ##Date added
     InsertStatement += "'" + str(datetime.datetime.now()) + "')"
     cursor.execute(InsertStatement)
@@ -42,24 +42,26 @@ def AnalysePasswordMakeup(password):
     #If in dictionary print that it is and print dictionary
     return result
 
-def AnalyseAdvancedMask(password):
+def AnalyseAdvancedMask(password, connection, cursor):
     advancedMask = Analyse.AdvancedMask(password)
-    advancedMaskCount = Database.GetAdvancedMaskCount(advancedMask)
+    advancedMaskCount = Database.GetAdvancedMaskCount(advancedMask, connection, cursor)
     print("Advanced Mask Count = " + str(advancedMaskCount))
-    advancedMaskRank = Database.GetAdvancedMaskRank(advancedMask)
+    advancedMaskRank = Database.GetAdvancedMaskRank(advancedMask, connection, cursor)
     print("Advanced Mask Rank = " + str(advancedMaskRank))
     return (advancedMaskRank * advancedMaskCount)
 
 def AnalyseCharacterPlacement(password):
     result = 0.0
-
+    #Div number of chars
+    #Char ranking div number of chars
+    #Bonus  for exact placement match
     return result
 
-def AnalyseCharacterSet(password):
+def AnalyseCharacterSet(password, connection, cursor):
     characterSet = Analyse.CharacterSet(password)
-    characterSetCount = Database.GetCharacterSetCount(characterSet)
+    characterSetCount = Database.GetCharacterSetCount(characterSet, connection, cursor)
     print("Character Set Count = " + str(characterSetCount))
-    characterSetRank = Database.GetCharacterSetRank(characterSet)
+    characterSetRank = Database.GetCharacterSetRank(characterSet, connection, cursor)
     print("Character Set Rank = " + str(characterSetRank))
     return (characterSetCount * characterSetRank)
 
@@ -83,12 +85,12 @@ def AnalyseSimpleMask(password):
 
     return result
 
-def AnalysePassword(password):
+def AnalysePassword(password, connection, cursor):
     result = 0.0
     result += AnalysePasswordMakeup(password)
-    result += AnalyseAdvancedMask(password)
+    result += AnalyseAdvancedMask(password, connection, cursor)
     result += AnalyseCharacterPlacement(password)
-    result += AnalyseCharacterSet(password)
+    result += AnalyseCharacterSet(password, connection, cursor)
     result += AnalyseMarkovChain(password)
     result += AnalyseNGrams(password)
     result += AnalyseNGramUnsigned(password)
@@ -128,7 +130,7 @@ def main():
 
     else:
         ##Analyse single password
-        print("Result for " + inputPassword + " is " + str(AnalysePassword(inputPassword)))
+        print("Result for " + inputPassword + " is " + str(AnalysePassword(inputPassword, connection, cursor)))
 
     t1 = time.time()
     print("Total time taken to analyse: " + str(t1-t0))

@@ -11,15 +11,8 @@ def ReplaceSingleQuote(password):
 
 def CharacterPlacement(password):
     characterList = []
-    if(not password.__contains__("'")):
-        for i in range(password.__len__()):
-            characterList.append((password[i], str(i)))
-    else:
-        for i in range(password.__len__()):
-            if(password[i] == "'"):
-                characterList.append(("''", str(i)))
-            else:
-                characterList.append((password[i], str(i)))
+    for i in range(password.__len__()):
+        characterList.append((password[i], str(i)))
     return characterList
 
 def AdvancedMask(password):
@@ -67,44 +60,23 @@ def CharacterSet(password):
 
 def MarkovChain(password):
     chain = []
-    if(not password.__contains__("'")):
-        for i in range(len(password)-1):
-            chain.append((password[i], password[i+1]))
-    else:
-        for i in range(len(password)-1):
-            if(password[i] == "'" and password[i+1]):
-                chain.append(("''", "''"))
-            elif(password[i] == "'"):
-                chain.append(("''", password[i+1]))
-            elif(password[i+1] + "'"):
-                chain.append((password[i], "''"))
-            else:
-                chain.append((password[i], password[i+1]))
+    for i in range(len(password)-1):
+        chain.append((password[i], password[i+1]))
     return chain
 
 def NGrams(password):
     nGram = []
-    if(not password.__contains__("'")):
-        for i in range(2, len(password)):
-            for j in range(len(password)-i + 1):
-                nGram.append((i, password[j:j+i], j, 0))
-    else:
-        for i in range(2, len(password)):
-            for j in range(len(password)-i + 1):
-                nGram.append((i, ReplaceSingleQuote(password[j:j+i]), j, 0))
+    for i in range(2, len(password)):
+        for j in range(len(password)-i + 1):
+            nGram.append((i, password[j:j+i], j, 0))
     return  nGram
 
 def NGramsUnsigned(password):
     nGram = []
     password = password.lower()
-    if(not password.__contains__("'")):
-        for i in range(2, len(password)):
-            for j in range(len(password)-i + 1):
-                nGram.append((i, password[j:j+i], j, 1))
-    else:
-        for i in range(2, len(password)):
-            for j in range(len(password)-i + 1):
-                nGram.append((i, ReplaceSingleQuote(password[j:j+i]), j, 1))
+    for i in range(2, len(password)):
+        for j in range(len(password)-i + 1):
+            nGram.append((i, password[j:j+i], j, 1))
     return  nGram
 
 def SimpleMask(password):
