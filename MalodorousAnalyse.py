@@ -76,18 +76,24 @@ def AnalyseMarkovChain(password, connection, cursor):
     chains = Analyse.MarkovChain(password)
     for chain in chains:
         result += Database.GetMarkovChainRank(chain[0], chain[1], connection, cursor)
-    print("Markov Chain Ranking = " + str(result/len(password)))
+    print("Markov Chain Ranking = " + str(result/(len(password)-1)))
     return result/(len(password) - 1)
 
 def AnalyseNGrams(password, connection, cursor):
-    result = 1.0
-
-    return result
+    result = 0.0
+    nGrams = Analyse.NGrams(password)
+    for nGram in nGrams:
+        result += Database.GetNGramRank(nGram[1], connection, cursor)
+    print("NGram Ranking = " + str(result/len(nGrams)))
+    return result/len(nGrams)
 
 def AnalyseNGramUnsigned(password, connection, cursor):
-    result = 1.0
-
-    return result
+    result = 0.0
+    nGrams = Analyse.NGramsUnsigned(password)
+    for nGram in nGrams:
+        result += Database.GetNGramRank(nGram[1], connection, cursor)
+    print("Unsigned NGram Ranking = " + str(result/len(nGrams)))
+    return result/len(nGrams)
 
 def AnalyseSimpleMask(password, connection, cursor):
     simpleMask = Analyse.SimpleMask(password)
@@ -99,15 +105,21 @@ def AnalyseSimpleMask(password, connection, cursor):
 
 def AnalysePassword(password, connection, cursor):
     result = 0.0
-    numberOfTests = 8
+    numberOfTests = 5
     IsPasswordInDictionary(password, connection, cursor)
     result += AnalysePasswordLength(password, connection, cursor)
     result += AnalyseAdvancedMask(password, connection, cursor)
     result += AnalyseCharacterPlacement(password, connection, cursor)
     result += AnalyseCharacterSet(password, connection, cursor)
-    result += AnalyseMarkovChain(password, connection, cursor)#
-    result += AnalyseNGrams(password, connection, cursor)#
-    result += AnalyseNGramUnsigned(password, connection, cursor)#
+    if(len(password) > 1):
+        result += AnalyseMarkovChain(password, connection, cursor)
+        numberOfTests += 1
+    if(len(password) > 2):
+        result += AnalyseNGrams(password, connection, cursor)
+        numberOfTests += 1
+        if (any(x.isupper() for x in password)):
+            result += AnalyseNGramUnsigned(password, connection, cursor)
+            numberOfTests += 1
     result += AnalyseSimpleMask(password, connection, cursor)
     print("Password ranking for \"" + password + "\" is " + str(result/numberOfTests))
     return result/numberOfTests

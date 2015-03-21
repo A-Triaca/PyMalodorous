@@ -108,15 +108,45 @@ def GetCharacterPlacementRanking(character, placement, connection, cursor):
 def GetMarkovChainRank(firstCharacter, secondCharacter, connection, cursor):
     result = cursor.execute("DECLARE @MaxRank INT "
                             "SELECT @MaxRank=DENSE_RANK() OVER (ORDER BY COUNT(*)) "
-                            "FROM dbo.MarkovChain INNER JOIN dbo.Password "
-                                "ON dbo.MarkovChain.OriginalPassword=dbo.Password.PasswordId "
+                            "FROM dbo.MarkovChain "
                             "GROUP BY FirstCharacter, SecondCharacter  "
                             "SELECT CAST(R.Rank AS float)/CAST(@MaxRank AS float) FROM "
                             "(SELECT FirstCharacter, SecondCharacter, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
-                            "FROM dbo.MarkovChain INNER JOIN dbo.Password "
-                                "ON dbo.MarkovChain.OriginalPassword = dbo.Password.PasswordId "
+                            "FROM dbo.MarkovChain "
                             "GROUP BY FirstCharacter, SecondCharacter) AS R "
                             "WHERE R.FirstCharacter = ? AND R.SecondCharacter = ?", firstCharacter, secondCharacter).fetchone()
+    if(result == None):
+        return None
+    return result[0]
+
+def GetNGramRank(nGram, connection, cursor):
+    result = cursor.execute("DECLARE @MaxRank INT "
+                            "SELECT @MaxRank=DENSE_RANK() OVER (ORDER BY COUNT(*)) "
+                            "FROM dbo.NGrams "
+                            "WHERE Unsigned = 0 "
+                            "GROUP BY NGram "
+                            "SELECT CAST(R.Rank AS float)/CAST(@MaxRank AS float) FROM "
+                            "(SELECT NGram, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
+                            "FROM dbo.NGrams "
+                            "WHERE Unsigned = 0 "
+                            "GROUP BY NGram) AS R "
+                            "WHERE R.NGram = ?", nGram).fetchone()
+    if(result == None):
+        return None
+    return result[0]
+
+def GetNGramUnsignedRank(nGram, connection, cursor):
+    result = cursor.execute("DECLARE @MaxRank INT "
+                            "SELECT @MaxRank=DENSE_RANK() OVER (ORDER BY COUNT(*)) "
+                            "FROM dbo.NGrams "
+                            "WHERE Unsigned = 1 "
+                            "GROUP BY NGram "
+                            "SELECT CAST(R.Rank AS float)/CAST(@MaxRank AS float) FROM "
+                            "(SELECT NGram, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
+                            "FROM dbo.NGrams "
+                            "WHERE Unsigned = 1 "
+                            "GROUP BY NGram) AS R "
+                            "WHERE R.NGram = ?", nGram).fetchone()
     if(result == None):
         return None
     return result[0]
