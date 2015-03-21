@@ -73,7 +73,7 @@ def GetPasswordLengthRank(length, connection, cursor):
                             "SELECT CAST(R.Rank AS float)/CAST(@MaxRank AS float) FROM "
                                 "(SELECT Length, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
                                 "FROM dbo.Password GROUP BY Length) AS R "
-                            "WHERE R.Length = '" + str(length) + "'").fetchone()
+                            "WHERE R.Length = " + str(length) + "").fetchone()
     if(result == None):
         return 0
     return result[0]
@@ -87,7 +87,7 @@ def GetPasswordOrigin(password, connection, cursor):
         return None
     return result[0]
 
-def GetCharacterPlacement(character, placement, connection, cursor):
+def GetCharacterPlacementRanking(character, placement, connection, cursor):
     result = cursor.execute("DECLARE @MaxRank INT "
                             "SELECT @MaxRank=DENSE_RANK() OVER (ORDER BY COUNT(*)) "
                             "FROM dbo.CharacterPlacement INNER JOIN dbo.Password  "
@@ -101,6 +101,22 @@ def GetCharacterPlacement(character, placement, connection, cursor):
                             "WHERE dbo.Password.Length >= " + str(placement) + " "
                             "GROUP BY Character, Placement) AS R "
                             "WHERE R.Character = ? AND R.Placement = " + str(placement), character).fetchone()
+    if(result == None):
+        return None
+    return result[0]
+
+def GetMarkovChainRank(firstCharacter, secondCharacter, connection, cursor):
+    result = cursor.execute("DECLARE @MaxRank INT "
+                            "SELECT @MaxRank=DENSE_RANK() OVER (ORDER BY COUNT(*)) "
+                            "FROM dbo.MarkovChain INNER JOIN dbo.Password "
+                                "ON dbo.MarkovChain.OriginalPassword=dbo.Password.PasswordId "
+                            "GROUP BY FirstCharacter, SecondCharacter  "
+                            "SELECT CAST(R.Rank AS float)/CAST(@MaxRank AS float) FROM "
+                            "(SELECT FirstCharacter, SecondCharacter, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
+                            "FROM dbo.MarkovChain INNER JOIN dbo.Password "
+                                "ON dbo.MarkovChain.OriginalPassword = dbo.Password.PasswordId "
+                            "GROUP BY FirstCharacter, SecondCharacter) AS R "
+                            "WHERE R.FirstCharacter = ? AND R.SecondCharacter = ?", firstCharacter, secondCharacter).fetchone()
     if(result == None):
         return None
     return result[0]

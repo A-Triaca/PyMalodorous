@@ -59,7 +59,7 @@ def AnalyseCharacterPlacement(password, connection, cursor):
     result = 0.0
     characters = Analyse.CharacterPlacement(password)
     for character in characters:
-        result += Database.GetCharacterPlacement(character[0], character[1], connection, cursor)
+        result += Database.GetCharacterPlacementRanking(character[0], character[1], connection, cursor)
     print("Character Placement Ranking = " + str(result/len(password)))
     return result/len(password)
 
@@ -72,9 +72,12 @@ def AnalyseCharacterSet(password, connection, cursor):
     return (characterSetCount + characterSetRank)/2
 
 def AnalyseMarkovChain(password, connection, cursor):
-    result = 1.0
-
-    return result
+    result = 0.0
+    chains = Analyse.MarkovChain(password)
+    for chain in chains:
+        result += Database.GetMarkovChainRank(chain[0], chain[1], connection, cursor)
+    print("Markov Chain Ranking = " + str(result/len(password)))
+    return result/(len(password) - 1)
 
 def AnalyseNGrams(password, connection, cursor):
     result = 1.0
@@ -100,8 +103,8 @@ def AnalysePassword(password, connection, cursor):
     IsPasswordInDictionary(password, connection, cursor)
     result += AnalysePasswordLength(password, connection, cursor)
     result += AnalyseAdvancedMask(password, connection, cursor)
-    result += AnalyseCharacterPlacement(password, connection, cursor)#
-    result += AnalyseCharacterSet(password, connection, cursor)#
+    result += AnalyseCharacterPlacement(password, connection, cursor)
+    result += AnalyseCharacterSet(password, connection, cursor)
     result += AnalyseMarkovChain(password, connection, cursor)#
     result += AnalyseNGrams(password, connection, cursor)#
     result += AnalyseNGramUnsigned(password, connection, cursor)#
