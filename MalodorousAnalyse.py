@@ -56,11 +56,12 @@ def AnalyseAdvancedMask(password, connection, cursor):
     return (advancedMaskRank + advancedMaskCount)/2
 
 def AnalyseCharacterPlacement(password, connection, cursor):
-    result = 1.0
-    #Div number of chars
-    #Char ranking div number of chars
-    #Bonus  for exact placement match
-    return result
+    result = 0.0
+    characters = Analyse.CharacterPlacement(password)
+    for character in characters:
+        result += Database.GetCharacterPlacement(character[0], character[1], connection, cursor)
+    print("Character Placement Ranking = " + str(result/len(password)))
+    return result/len(password)
 
 def AnalyseCharacterSet(password, connection, cursor):
     characterSet = Analyse.CharacterSet(password)
@@ -99,11 +100,11 @@ def AnalysePassword(password, connection, cursor):
     IsPasswordInDictionary(password, connection, cursor)
     result += AnalysePasswordLength(password, connection, cursor)
     result += AnalyseAdvancedMask(password, connection, cursor)
-    result += AnalyseCharacterPlacement(password, connection, cursor)
-    result += AnalyseCharacterSet(password, connection, cursor)
-    result += AnalyseMarkovChain(password, connection, cursor)
-    result += AnalyseNGrams(password, connection, cursor)
-    result += AnalyseNGramUnsigned(password, connection, cursor)
+    result += AnalyseCharacterPlacement(password, connection, cursor)#
+    result += AnalyseCharacterSet(password, connection, cursor)#
+    result += AnalyseMarkovChain(password, connection, cursor)#
+    result += AnalyseNGrams(password, connection, cursor)#
+    result += AnalyseNGramUnsigned(password, connection, cursor)#
     result += AnalyseSimpleMask(password, connection, cursor)
     print("Password ranking for \"" + password + "\" is " + str(result/numberOfTests))
     return result/numberOfTests

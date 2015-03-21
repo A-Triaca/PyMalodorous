@@ -86,3 +86,21 @@ def GetPasswordOrigin(password, connection, cursor):
     if(result == None):
         return None
     return result[0]
+
+def GetCharacterPlacement(character, placement, connection, cursor):
+    result = cursor.execute("DECLARE @MaxRank INT "
+                            "SELECT @MaxRank=DENSE_RANK() OVER (ORDER BY COUNT(*)) "
+                            "FROM dbo.CharacterPlacement INNER JOIN dbo.Password  "
+                                "ON dbo.CharacterPlacement.OriginalPassword=dbo.Password.PasswordId "
+                            "WHERE dbo.Password.Length >= " + str(placement) + " "
+                            "GROUP BY Character, Placement "
+                            "SELECT CAST(R.Rank AS float)/CAST(@MaxRank AS float) FROM "
+                            "(SELECT Character, Placement, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
+                            "FROM dbo.CharacterPlacement INNER JOIN dbo.Password "
+                                "ON dbo.CharacterPlacement.OriginalPassword = dbo.Password.PasswordId "
+                            "WHERE dbo.Password.Length >= " + str(placement) + " "
+                            "GROUP BY Character, Placement) AS R "
+                            "WHERE R.Character = ? AND R.Placement = " + str(placement), character).fetchone()
+    if(result == None):
+        return None
+    return result[0]

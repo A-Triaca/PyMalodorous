@@ -12,7 +12,7 @@ def ReplaceSingleQuote(password):
 def CharacterPlacement(password):
     characterList = []
     for i in range(password.__len__()):
-        characterList.append((password[i], str(i)))
+        characterList.append((password[i], i))
     return characterList
 
 def AdvancedMask(password):

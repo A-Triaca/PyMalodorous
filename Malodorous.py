@@ -49,7 +49,7 @@ def InsertCharacterPlacement(password, passwordId, connection, cursor):
                       "(Character, Placement, OriginalPassword) VALUES "
     args = []
     for character in Analyse.CharacterPlacement(password):
-        InsertStatement += "(?, " + character[1] + ", " + str(passwordId) + "),"
+        InsertStatement += "(?, " + str(character[1]) + ", " + str(passwordId) + "),"
         args.append(character[0])
     cursor.execute(InsertStatement[:-1], args)
     connection.commit()
