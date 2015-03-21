@@ -36,11 +36,16 @@ def InsertAnalysedPassword(connection, cursor, files, word):
     cursor.execute(InsertStatement)
     connection.commit()
 
-def AnalysePasswordMakeup(password):
-    result = 0.0
+def IsPasswordInDictionary(password, connection, cursor):
+    origin = Database.GetPasswordOrigin(password, connection, cursor)
+    if(not origin == None):
+        print("Password located in dictionary \"" + origin + "\"")
+
+def AnalysePasswordLength(password, connection, cursor):
     #Rank length and add rank rather than frequency
-    #If in dictionary print that it is and print dictionary
-    return result
+    passwordLengthRank = Database.GetPasswordLengthRank(len(password), connection, cursor)
+    print("Password Length Rank = " + str(passwordLengthRank))
+    return passwordLengthRank
 
 def AnalyseAdvancedMask(password, connection, cursor):
     advancedMask = Analyse.AdvancedMask(password)
@@ -48,10 +53,10 @@ def AnalyseAdvancedMask(password, connection, cursor):
     print("Advanced Mask Count = " + str(advancedMaskCount))
     advancedMaskRank = Database.GetAdvancedMaskRank(advancedMask, connection, cursor)
     print("Advanced Mask Rank = " + str(advancedMaskRank))
-    return (advancedMaskRank + advancedMaskCount)
+    return (advancedMaskRank + advancedMaskCount)/2
 
 def AnalyseCharacterPlacement(password, connection, cursor):
-    result = 0.0
+    result = 1.0
     #Div number of chars
     #Char ranking div number of chars
     #Bonus  for exact placement match
@@ -63,20 +68,20 @@ def AnalyseCharacterSet(password, connection, cursor):
     print("Character Set Count = " + str(characterSetCount))
     characterSetRank = Database.GetCharacterSetRank(characterSet, connection, cursor)
     print("Character Set Rank = " + str(characterSetRank))
-    return (characterSetCount + characterSetRank)
+    return (characterSetCount + characterSetRank)/2
 
 def AnalyseMarkovChain(password, connection, cursor):
-    result = 0.0
+    result = 1.0
 
     return result
 
 def AnalyseNGrams(password, connection, cursor):
-    result = 0.0
+    result = 1.0
 
     return result
 
 def AnalyseNGramUnsigned(password, connection, cursor):
-    result = 0.0
+    result = 1.0
 
     return result
 
@@ -86,12 +91,13 @@ def AnalyseSimpleMask(password, connection, cursor):
     print("Simple Mask Count = " + str(simpleMaskCount))
     simpleMaskRank = Database.GetSimpleMaskRank(simpleMask, connection, cursor)
     print("Simple Mask Rank = " + str(simpleMaskRank))
-    return (simpleMaskRank + simpleMaskCount)
+    return (simpleMaskRank + simpleMaskCount)/2
 
 def AnalysePassword(password, connection, cursor):
     result = 0.0
     numberOfTests = 8
-    result += AnalysePasswordMakeup(password)
+    IsPasswordInDictionary(password, connection, cursor)
+    result += AnalysePasswordLength(password, connection, cursor)
     result += AnalyseAdvancedMask(password, connection, cursor)
     result += AnalyseCharacterPlacement(password, connection, cursor)
     result += AnalyseCharacterSet(password, connection, cursor)
@@ -99,6 +105,7 @@ def AnalysePassword(password, connection, cursor):
     result += AnalyseNGrams(password, connection, cursor)
     result += AnalyseNGramUnsigned(password, connection, cursor)
     result += AnalyseSimpleMask(password, connection, cursor)
+    print("Password ranking for \"" + password + "\" is " + str(result/numberOfTests))
     return result/numberOfTests
 
 def main():

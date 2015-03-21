@@ -65,3 +65,24 @@ def GetSimpleMaskRank(mask, connection, cursor):
     if(result == None):
         return 0
     return result[0]
+
+def GetPasswordLengthRank(length, connection, cursor):
+    result = cursor.execute("DECLARE @MaxRank INT "
+                            "SELECT @MaxRank=DENSE_RANK() OVER (ORDER BY COUNT(*)) "
+                                    "FROM dbo.Password GROUP BY Length "
+                            "SELECT CAST(R.Rank AS float)/CAST(@MaxRank AS float) FROM "
+                                "(SELECT Length, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
+                                "FROM dbo.Password GROUP BY Length) AS R "
+                            "WHERE R.Length = '" + str(length) + "'").fetchone()
+    if(result == None):
+        return 0
+    return result[0]
+
+def GetPasswordOrigin(password, connection, cursor):
+    result = cursor.execute("SELECT po.Origin "
+                            "FROM dbo.Password as P INNER JOIN dbo.PasswordOrigin AS po "
+                            "ON p.PasswordOrigin = po.OriginId "
+                            "WHERE Password = ?", password).fetchone()
+    if(result == None):
+        return None
+    return result[0]
