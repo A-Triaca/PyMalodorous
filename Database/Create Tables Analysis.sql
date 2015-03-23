@@ -6,3 +6,14 @@ CREATE TABLE dbo.PasswordAnalysis (
 	DateAdded DATETIME2 DEFAULT GETDATE(),
 	PRIMARY KEY (PasswordId)
 );
+
+CREATE TABLE fac.NGram(
+NGram NVARCHAR(100),
+Rank INT,
+Unsigned BIT,
+Length INT);
+
+INSERT INTO fac.NGram
+SELECT NGram, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank, Unsigned, Lenth
+FROM dbo.NGrams
+GROUP BY NGram, Unsigned, Lenth

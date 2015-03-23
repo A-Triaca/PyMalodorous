@@ -1,1 +1,2 @@
-DROP TABLE dbo.PasswordAnalysis;
+DROP TABLE dbo.PasswordAnalysis,
+fac.NGram;
