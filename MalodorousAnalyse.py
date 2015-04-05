@@ -111,40 +111,21 @@ def AnalyseSimpleMask(password, connection, cursor):
 def AnalysePassword(password, connection, cursor):
     result = 0.0
     numberOfTests = 5
-    ti0 = time.time()
     IsPasswordInDictionary(password, connection, cursor)
-    print(time.time() - ti0)
-    ti0 = time.time()
     result += AnalysePasswordLength(password, connection, cursor)
-    print(time.time() - ti0)
-    ti0 = time.time()
     result += AnalyseAdvancedMask(password, connection, cursor)
-    print(time.time() - ti0)
-    ti0 = time.time()
     result += AnalyseCharacterPlacement(password, connection, cursor)
-    print(time.time() - ti0)
-    ti0 = time.time()
     result += AnalyseCharacterSet(password, connection, cursor)
-    print(time.time() - ti0)
-    ti0 = time.time()
     if(len(password) > 1):
         result += AnalyseMarkovChain(password, connection, cursor)
-        print(time.time() - ti0)
-        ti0 = time.time()
         numberOfTests += 1
     if(len(password) > 2):
         result += AnalyseNGrams(password, connection, cursor)
-        print(time.time() - ti0)
-        ti0 = time.time()
         numberOfTests += 1
         if (any(x.isupper() for x in password)):
             result += AnalyseNGramUnsigned(password, connection, cursor)
-            print(time.time() - ti0)
-            ti0 = time.time()
             numberOfTests += 1
     result += AnalyseSimpleMask(password, connection, cursor)
-    print(time.time() - ti0)
-    ti0 = time.time()
     print("Password ranking for \"" + password + "\" is " + str((1-(result/numberOfTests))*100) + "%")
     return result/numberOfTests
 
@@ -155,8 +136,11 @@ def main():
     cursor = connection.cursor()
 
     ##Reset database
-    print("Resetting database and creating fac tables.")
-    ResetPassword(connection, cursor)
+    reset = input("Would you like to reset the fact tables?\n"
+                  "If yes type 'yes', else leave blank.")
+    if(reset == "yes"):
+        print("Resetting database and creating fac tables.")
+        ResetPassword(connection, cursor)
 
     ##Read in password or run through Analyse file
     inputPassword = input("Would you like to analyse a single password?\n"
@@ -167,6 +151,7 @@ def main():
     if(inputPassword == ""):
         ##Read in passwords and from Analyse folder
         analysisFolder = "Analyse"
+        analysedCount = 0
         fileList = []
         for (dirpath, dirnames, filenames) in walk(analysisFolder + "/"):
             fileList.extend(filenames)
@@ -178,6 +163,7 @@ def main():
             for password in passwordFileReader:
                 ##Analyse password
                 if(not password == ""):
+                    analysedCount += 1
                     InsertAnalysedPassword(connection, cursor, files, password)
 
     else:
@@ -186,6 +172,8 @@ def main():
 
     t1 = time.time()
     print("Total time taken to analyse: " + str(t1-t0))
+    print("Total passwords analysed: " + str(analysedCount))
+    print("Average time per password: " + str((t1-t0)/analysedCount))
 
 
 if __name__ == "__main__":
