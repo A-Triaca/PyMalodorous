@@ -99,7 +99,7 @@ def GetCharacterPlacementRanking(character, placement, length, connection, curso
                             "WHERE Placement = " + str(placement) + " AND Length = " + str(length) + ") AS R "
                             "WHERE Character = ?", character).fetchone()
     if(result == None):
-        return None
+        return 0
     return result[0]
 
 def GetMarkovChainRank(firstCharacter, secondCharacter, connection, cursor):
@@ -111,7 +111,7 @@ def GetMarkovChainRank(firstCharacter, secondCharacter, connection, cursor):
                             "FROM fac.MarkovChain) AS R "
                             "WHERE CharacterOne = ? AND CharacterTwo = ? ", firstCharacter, secondCharacter).fetchone()
     if(result == None):
-        return None
+        return 0
     return result[0]
 
 def GetNGramRank(nGram, connection, cursor):
