@@ -9,6 +9,7 @@ import DataAccess as Database
 
 def ResetPassword(connection, cursor):
     ##Drop table
+    time0 = time.time()
     file = open("Database/Drop Tables Analysis.sql")
     sql = " ".join(file.readlines())
     cursor.execute(sql)
@@ -18,6 +19,7 @@ def ResetPassword(connection, cursor):
     sql = " ".join(file.readlines())
     cursor.execute(sql)
     connection.commit()
+    print("Database reset and fact table creation took " + str(time.time()-time0))
 
 def InsertAnalysedPassword(connection, cursor, files, word):
     ##Create insert statement
@@ -159,7 +161,7 @@ def main():
             ##Run through each file and read in each word
             for password in passwordFileReader:
                 ##Analyse password
-                password.rstrip("\n")
+                password = password.rstrip("\n")
                 if(not password == ""):
                     analysedCount += 1
                     InsertAnalysedPassword(connection, cursor, files, password)
