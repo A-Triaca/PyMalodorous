@@ -1,2 +1,3 @@
 DROP TABLE dbo.PasswordAnalysis,
-fac.NGram;
+fac.NGram,
+fac.PasswordOrigin;

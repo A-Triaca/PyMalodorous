@@ -22,7 +22,7 @@ def ResetPassword(connection, cursor):
 def InsertAnalysedPassword(connection, cursor, files, word):
     ##Create insert statement
     InsertStatement = "INSERT INTO dbo.PasswordAnalysis " \
-                      "(Password, PasswordOrigin, Analysis, DateAdded) " \
+                      "(Password, PasswordOrigin, Analysis, Length, Complexity, DateAdded) " \
                       "VALUES ("
     ##Password
     InsertStatement += "'" + word + "', "
@@ -30,7 +30,11 @@ def InsertAnalysedPassword(connection, cursor, files, word):
     InsertStatement += "'" + files + "', "
     ##Analysis
     result = AnalysePassword(word, connection, cursor)
-    InsertStatement += "CAST(" + str(result) + " AS float), "
+    InsertStatement += "CAST(" + str((1-result)*100) + " AS float), "
+    #Length
+    InsertStatement += str(len(word)) + ", "
+    #Password complexity
+    InsertStatement += "'" + Analyse.CharacterSet(word) + "', "
     ##Date added
     InsertStatement += "'" + str(datetime.datetime.now()) + "')"
     cursor.execute(InsertStatement)
@@ -140,7 +144,7 @@ def AnalysePassword(password, connection, cursor):
     result += AnalyseSimpleMask(password, connection, cursor)
     print(time.time() - ti0)
     ti0 = time.time()
-    print("Password ranking for \"" + password + "\" is " + str(result/numberOfTests))
+    print("Password ranking for \"" + password + "\" is " + str((1-(result/numberOfTests))*100) + "%")
     return result/numberOfTests
 
 def main():
@@ -150,6 +154,7 @@ def main():
     cursor = connection.cursor()
 
     ##Reset database
+    print("Resetting database and creating fac tables.")
     ResetPassword(connection, cursor)
 
     ##Read in password or run through Analyse file

@@ -81,9 +81,8 @@ def GetPasswordLengthRank(length, connection, cursor):
     return result[0]
 
 def GetPasswordOrigin(password, connection, cursor):
-    result = cursor.execute("SELECT po.Origin "
-                            "FROM dbo.Password as P INNER JOIN dbo.PasswordOrigin AS po "
-                            "ON p.PasswordOrigin = po.OriginId "
+    result = cursor.execute("SELECT Origin "
+                            "FROM fac.PasswordOrigin "
                             "WHERE Password = ?", password).fetchone()
     if(result == None):
         return None
