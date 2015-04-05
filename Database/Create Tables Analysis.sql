@@ -5,7 +5,7 @@ CREATE TABLE dbo.PasswordAnalysis (
 	Dictionary NVARCHAR(100),
 	Analysis numeric(38,30),
 	Length INT,
-	Complexity NVARCHAR(20),
+	Complexity NVARCHAR(30),
 	DateAdded DATETIME2 DEFAULT GETDATE(),
 	PRIMARY KEY (PasswordId)
 );

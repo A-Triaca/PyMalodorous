@@ -23,13 +23,7 @@ def InsertAnalysedPassword(connection, cursor, files, word):
     ##Create insert statement
     InsertStatement = "INSERT INTO dbo.PasswordAnalysis " \
                       "(Password, PasswordOrigin, Dictionary, Analysis, Length, Complexity, DateAdded) " \
-                      "VALUES ("
-    ##Password
-    InsertStatement += "'" + word + "', "
-    ##File origin
-    InsertStatement += "'" + files + "', "
-    ##Dictionary
-    InsertStatement += "'" + IsPasswordInDictionary(word, connection, cursor) + "', "
+                      "VALUES (?, ?, ?, "
     ##Analysis
     result = AnalysePassword(word, connection, cursor)
     InsertStatement += "CAST(" + str((1-result)*100) + " AS float), "
@@ -39,14 +33,14 @@ def InsertAnalysedPassword(connection, cursor, files, word):
     InsertStatement += "'" + Analyse.CharacterSet(word) + "', "
     ##Date added
     InsertStatement += "'" + str(datetime.datetime.now()) + "')"
-    cursor.execute(InsertStatement)
+    cursor.execute(InsertStatement, [word, files, IsPasswordInDictionary(word, connection, cursor)])
     connection.commit()
 
 def IsPasswordInDictionary(password, connection, cursor):
     origin = Database.GetPasswordOrigin(password, connection, cursor)
     if(origin == None):
         return ""
-    print("Password located in dictionary \"" + origin + "\"")
+    #print("Password located in dictionary \"" + origin + "\"")
     return origin
 
 def AnalysePasswordLength(password, connection, cursor):
@@ -165,6 +159,7 @@ def main():
             ##Run through each file and read in each word
             for password in passwordFileReader:
                 ##Analyse password
+                password.rstrip("\n")
                 if(not password == ""):
                     analysedCount += 1
                     InsertAnalysedPassword(connection, cursor, files, password)
