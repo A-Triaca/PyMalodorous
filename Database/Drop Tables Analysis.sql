@@ -1,3 +1,5 @@
 DROP TABLE dbo.PasswordAnalysis,
 fac.NGram,
-fac.PasswordOrigin;
+fac.PasswordOrigin,
+fac.CharacterPlacement,
+fac.MarkovChain;

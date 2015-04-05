@@ -61,9 +61,10 @@ def AnalyseAdvancedMask(password, connection, cursor):
 
 def AnalyseCharacterPlacement(password, connection, cursor):
     result = 0.0
+    length = len(password)
     characters = Analyse.CharacterPlacement(password)
     for character in characters:
-        result += Database.GetCharacterPlacementRanking(character[0], character[1], connection, cursor)
+        result += Database.GetCharacterPlacementRanking(character[0], character[1], length, connection, cursor)
     print("Character Placement Ranking = " + str(result/len(password)))
     return result/len(password)
 

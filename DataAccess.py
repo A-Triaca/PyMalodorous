@@ -88,34 +88,28 @@ def GetPasswordOrigin(password, connection, cursor):
         return None
     return result[0]
 
-def GetCharacterPlacementRanking(character, placement, connection, cursor):
+def GetCharacterPlacementRanking(character, placement, length, connection, cursor):
     result = cursor.execute("DECLARE @MaxRank INT "
-                            "SELECT @MaxRank=DENSE_RANK() OVER (ORDER BY COUNT(*)) "
-                            "FROM dbo.CharacterPlacement INNER JOIN dbo.Password  "
-                                "ON dbo.CharacterPlacement.OriginalPassword=dbo.Password.PasswordId "
-                            "WHERE dbo.Password.Length >= " + str(placement) + " "
-                            "GROUP BY Character, Placement "
+                            "SELECT @MaxRank=MAX(Rank) "
+                            "FROM fac.CharacterPlacement "
+                            "WHERE Length = " + str(length) + " "
                             "SELECT CAST(R.Rank AS float)/CAST(@MaxRank AS float) FROM "
-                            "(SELECT Character, Placement, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
-                            "FROM dbo.CharacterPlacement INNER JOIN dbo.Password "
-                                "ON dbo.CharacterPlacement.OriginalPassword = dbo.Password.PasswordId "
-                            "WHERE dbo.Password.Length >= " + str(placement) + " "
-                            "GROUP BY Character, Placement) AS R "
-                            "WHERE R.Character = ? AND R.Placement = " + str(placement), character).fetchone()
+                            "(SELECT Character,  Rank "
+                            "FROM fac.CharacterPlacement "
+                            "WHERE Placement = " + str(placement) + " AND Length = " + str(length) + ") AS R "
+                            "WHERE Character = ?", character).fetchone()
     if(result == None):
         return None
     return result[0]
 
 def GetMarkovChainRank(firstCharacter, secondCharacter, connection, cursor):
     result = cursor.execute("DECLARE @MaxRank INT "
-                            "SELECT @MaxRank=DENSE_RANK() OVER (ORDER BY COUNT(*)) "
-                            "FROM dbo.MarkovChain "
-                            "GROUP BY FirstCharacter, SecondCharacter  "
+                            "SELECT @MaxRank=MAX(Rank) "
+                            "FROM fac.MarkovChain "
                             "SELECT CAST(R.Rank AS float)/CAST(@MaxRank AS float) FROM "
-                            "(SELECT FirstCharacter, SecondCharacter, DENSE_RANK() OVER (ORDER BY COUNT(*)) AS Rank "
-                            "FROM dbo.MarkovChain "
-                            "GROUP BY FirstCharacter, SecondCharacter) AS R "
-                            "WHERE R.FirstCharacter = ? AND R.SecondCharacter = ?", firstCharacter, secondCharacter).fetchone()
+                            "(SELECT CharacterOne, CharacterTwo,  Rank "
+                            "FROM fac.MarkovChain) AS R "
+                            "WHERE CharacterOne = ? AND CharacterTwo = ? ", firstCharacter, secondCharacter).fetchone()
     if(result == None):
         return None
     return result[0]
